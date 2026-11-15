@@ -2,6 +2,18 @@
   "$schema": "https://unpkg.com/syncpack@15.3.3/dist/schema.json",
   "versionGroups": [
     {
+      "label": "Strapi validates frontend dependency semver directly and cannot read catalog references.",
+      "packages": ["strapi-instant-preview-example"],
+      "dependencies": [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "styled-components"
+      ],
+      "dependencyTypes": ["prod"],
+      "isIgnored": true
+    },
+    {
       "label": "Use workspace links for internal dependencies.",
       "dependencies": ["@ryangreenup/**", "@moworks/**"],
       "dependencyTypes": ["!local"],

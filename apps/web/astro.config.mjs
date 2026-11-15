@@ -14,7 +14,9 @@ import { defineConfig, envField, fontProviders } from "astro/config";
 function requireEnv(name) {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`${name} is not set. Run through mise, which loads .env.yaml.`);
+    throw new Error(
+      `${name} is not set. Run through mise, which loads .env.yaml.`,
+    );
   }
   return value;
 }

@@ -51,7 +51,8 @@ module.exports = {
       name: "not-to-unresolvable",
       severity: "error",
       from: {},
-      to: { couldNotResolve: true },
+      // Astro provides these virtual modules at build time, not on disk.
+      to: { couldNotResolve: true, pathNot: "^astro:env/(?:server|client)$" },
     },
     {
       name: "no-duplicate-dep-types",
@@ -119,6 +120,7 @@ module.exports = {
         "(^|/)[.]git/",
         "^(?:dist|build|out|coverage)/",
         "(^|/)[.](?:turbo|cache)/",
+        "(^|/)[.]astro/",
         "[.]min[.](?:js|cjs|mjs)$",
       ],
     },
