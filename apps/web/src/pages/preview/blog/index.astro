@@ -1,0 +1,18 @@
+---
+import BlogView from '../../../components/BlogView.astro';
+import { getBlog } from '../../../lib/cms';
+import { headers, verifyPreview } from '../../../lib/preview';
+
+const preview = verifyPreview(Astro.url);
+if (!preview) {
+	return new Response('Forbidden', { status: 403, headers });
+}
+
+const blog = await getBlog(preview);
+if (!blog) {
+	return new Response('Not found', { status: 404, headers });
+}
+for (const [name, value] of Object.entries(headers)) Astro.response.headers.set(name, value);
+---
+
+<BlogView blog={blog} preview />

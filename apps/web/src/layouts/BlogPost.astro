@@ -12,12 +12,13 @@ interface Props {
 	publicationDate: string | null;
 	updatedDate: string | null;
 	seo: Seo | null;
+	preview?: boolean;
 }
 
 const { title, description, image, publicationDate, updatedDate, seo } = Astro.props;
 ---
 
-<Page seo={seo} title={title} description={description}>
+<Page seo={seo} title={title} description={description} preview={Astro.props.preview ?? false}>
 	<article>
 		<div class="hero-image">
 			{image && <Media media={image} loading="eager" />}

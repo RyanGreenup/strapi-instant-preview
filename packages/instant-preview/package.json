@@ -27,7 +27,9 @@
     "fix": "oxlint --fix --fix-suggestions --type-aware --type-check .",
     "test": "vitest run --passWithNoTests"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ark-ui/react": "catalog:"
+  },
   "devDependencies": {
     "@rs/oxlint-config": "workspace:*",
     "@rs/typescript-config": "workspace:*",
@@ -44,7 +46,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-intl": "catalog:",
-    "react-router-dom": "catalog:",
     "styled-components": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
@@ -57,11 +58,11 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.9",
-    "react-router-dom": "^6.30.6",
     "styled-components": "^6.6.0"
   },
   "strapi": {
     "kind": "plugin",
+    "name": "instant-preview",
     "displayName": "Instant Preview",
     "description": "Instantly preview a draft in a split by autosaving"
   }

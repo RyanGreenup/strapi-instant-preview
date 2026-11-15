@@ -1,0 +1,31 @@
+---
+import Blocks from '../../../components/Blocks.astro';
+import PreviewBridge from '../../../components/PreviewBridge.astro';
+import BlogPost from '../../../layouts/BlogPost.astro';
+import { getPreviewBlogPost } from '../../../lib/cms';
+import { headers, verifyPreview } from '../../../lib/preview';
+
+const preview = verifyPreview(Astro.url);
+if (!preview) {
+	return new Response('Forbidden', { status: 403, headers });
+}
+
+const post = await getPreviewBlogPost(preview);
+if (!post) {
+	return new Response('Not found', { status: 404, headers });
+}
+for (const [name, value] of Object.entries(headers)) Astro.response.headers.set(name, value);
+---
+
+<BlogPost
+	title={post.title}
+	description={post.description}
+	image={post.cover}
+	publicationDate={post.publicationDate}
+	updatedDate={post.updatedDate}
+	seo={post.seo}
+	preview
+>
+	<Blocks blocks={post.blocks} />
+	<PreviewBridge />
+</BlogPost>

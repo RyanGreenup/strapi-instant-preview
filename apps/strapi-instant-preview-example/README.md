@@ -14,6 +14,8 @@ Run from the repository root:
 ```sh
 pnpm --dir packages/strapi-admin-seed-plugin build
 pnpm --dir packages/autosave-draft build
+pnpm --dir packages/instant-preview build
+pnpm --dir packages/preview-helpers build
 mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
 ```
 
@@ -58,6 +60,85 @@ New entries require an initial save before autosave starts.
 Set `DRAFT_AUTOSAVE_DEBOUNCE_MS` to change the delay (minimum 100 milliseconds),
 then restart Strapi. Publishing clears the per-tab revert snapshot. Autosave
 never publishes content.
+
+## Live article preview
+
+The example enables `instant-preview` and Strapi's native preview handler for
+articles, the home page, and the blog index. Start the Astro target in another
+terminal:
+
+```sh
+mise exec -- pnpm --dir apps/web dev
+```
+
+Both apps use the root encrypted environment. Set `WEB_URL` and `WEB_PORT` to
+the Astro address, `STRAPI_URL` and `STRAPI_PORT` to the Strapi address, and the
+same `STRAPI_ADMIN_SEED_API_TOKEN` and `PREVIEW_SECRET` in both server
+environments. The existing seed service reconciles that read-only content API
+token on boot. `PREVIEW_SECRET` only signs preview links, through
+`createPreviewConfig` in `config/admin.ts`.
+
+Previews can also run in their own web deployment beside the CMS, with the
+secret kept off the public site. See
+[a separate preview deployment](../web/README.md#a-separate-preview-deployment).
+
+Save a new article once, then edit its Draft tab with autosave enabled. The
+live-preview panel loads the article's signed `/preview/blog/…` URL. Autosave
+refreshes unchanged URLs through `strapiUpdate` and Astro's client router,
+keeping the iframe document and scroll position. Slug changes navigate the
+iframe. The Home and Blog single types preview at `/preview/` and
+`/preview/blog/`; their article grids show draft articles, whose links still
+point at the public pages. Other content types and unsaved entries have no
+live-preview panel. Ctrl/Command+Alt+P toggles preview, including when focus is
+inside the iframe.
+
+Preview links grant document-scoped bearer access for 1–2 hours. Keep their
+query strings out of proxy/access logs. The API token stays on the servers; only
+an HMAC signature reaches the browser. Rotating `PREVIEW_SECRET` revokes
+existing links without touching the API token.
+
+The content API grants no role any access: `src/index.ts` removes role content
+permissions on every boot, so only an API token can read content. The web server
+sends that token with every read and requests published content, except for a
+verified preview link, which reads the status it signed.
+
+To query the content API by hand, send the same token:
+
+```sh
+mise exec -- sh -c 'curl --fail-with-body -sS -g \
+  -H "Authorization: Bearer $STRAPI_ADMIN_SEED_API_TOKEN" \
+  "$STRAPI_URL/api/articles?status=draft"'
+```
+
+The preview target disables caching, referrers, indexing, and framing by other
+origins. See the [web preview contract](../web/README.md#strapi-article-preview)
+for URL signing and frontend protocol details.
+
+## End-to-end tests
+
+The Playwright suite in [`e2e/`](./e2e/) tests the live preview as an editor
+uses it. `strapiAssumptions.spec.ts` pins the Strapi admin internals the plugin
+depends on, so a Strapi upgrade that breaks one fails with the assumption's
+name. `livePreview.spec.ts` covers autosave refresh, slug changes, the dock's
+saved state, the shortcut, the mobile overlay, and the preview page's link
+checks and headers.
+
+Build the admin first, then run the suite from the repository root:
+
+```sh
+mise exec -- pnpm --dir apps/strapi-instant-preview-example build
+mise exec -- pnpm --dir apps/strapi-instant-preview-example test:e2e
+```
+
+`turbo run test:e2e` builds first. The suite starts its own Strapi and Astro
+servers on the dev ports plus one (`E2E_STRAPI_PORT` and `E2E_WEB_PORT` override
+them), so it can run while the dev servers are up. Each run seeds a new database
+at `.tmp/e2e/data.db`; it never touches `.tmp/data.db`. The seed adds its sample
+images to `public/uploads` each run.
+
+The suite signs in once with `STRAPI_ADMIN_SEED_EMAIL` and
+`STRAPI_ADMIN_SEED_PASSWORD`, and fails if they are not set. It saves the
+session to `.tmp/e2e/auth.json`, which git ignores.
 
 ## Web content components
 

@@ -15,14 +15,17 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.5",
     "@rs/contract": "workspace:*",
+    "@rs/strapi-preview-helpers": "workspace:*",
     "astro": "^7.4.12",
     "marked": "catalog:",
+    "sanitize-html": "catalog:",
     "sharp": "^0.35.5",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
     "@types/node": "catalog:",
+    "@types/sanitize-html": "catalog:",
     "typescript": "catalog:typescript-api"
   },
   "engines": {

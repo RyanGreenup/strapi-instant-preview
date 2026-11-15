@@ -1,6 +1,7 @@
 ---
 import type { HomePage } from '@rs/contract';
 import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
 import ArticleGrid from './ArticleGrid.astro';
 import Media from './Media.astro';
 
@@ -10,8 +11,16 @@ interface Props {
 }
 
 const { blocks } = Astro.props;
-// Rich text is Markdown written by CMS editors, who are trusted.
-const markdown = (body: string | null) => marked.parse(body ?? '', { async: false });
+
+/**
+ * Permitted HTML tags
+ *
+ * Rich text is Markdown, which can have raw HTML. Keep prose tags and images
+ * but drop drop scripts,  `javascript:` URLs etc.
+ */
+const allowedTags = [...sanitizeHtml.defaults.allowedTags, 'img'];
+const markdown = (body: string | null) =>
+	sanitizeHtml(marked.parse(body ?? '', { async: false }), { allowedTags });
 ---
 
 {

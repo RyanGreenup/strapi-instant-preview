@@ -1,0 +1,9 @@
+{
+  "extends": "@rs/typescript-config/base.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "isolatedDeclarations": false,
+    "types": ["node"]
+  },
+  "include": ["client", "server", "*.config.mts"]
+}

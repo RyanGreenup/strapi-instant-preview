@@ -1,8 +1,14 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalEnv": ["STRAPI_PORT", "STRAPI_URL", "WEB_PORT", "WEB_URL"],
-  "globalPassThroughEnv": ["STRAPI_ADMIN_SEED_*"],
+  "globalEnv": [
+    "STRAPI_PORT",
+    "STRAPI_PUBLIC_URL",
+    "STRAPI_URL",
+    "WEB_PORT",
+    "WEB_URL"
+  ],
+  "globalPassThroughEnv": ["PREVIEW_SECRET", "STRAPI_ADMIN_SEED_*", "E2E_*"],
   "tasks": {
     "transit": {
       "dependsOn": ["^transit"]

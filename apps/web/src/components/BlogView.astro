@@ -1,0 +1,29 @@
+---
+import type { BlogPage } from '@rs/contract';
+import Page from '../layouts/Page.astro';
+import ArticleGrid from './ArticleGrid.astro';
+import PreviewBridge from './PreviewBridge.astro';
+
+interface Props {
+	blog: BlogPage;
+	/** Set by the preview route only. */
+	preview?: boolean;
+}
+
+const { blog, preview = false } = Astro.props;
+---
+
+<Page seo={blog.seo} title={blog.title} description={blog.description} preview={preview}>
+	<div class="blog">
+		{blog.title && <h1>{blog.title}</h1>}
+		{blog.description && <p>{blog.description}</p>}
+		{blog.articleGrid && <ArticleGrid grid={blog.articleGrid} />}
+	</div>
+	{preview && <PreviewBridge />}
+</Page>
+
+<style>
+	:global(main) {
+		width: 960px;
+	}
+</style>

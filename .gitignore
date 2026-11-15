@@ -39,6 +39,10 @@ yarn-error.log*
 apps/strapi-instant-preview-example/.strapi
 apps/strapi-instant-preview-example/.strapi-updater.json
 apps/strapi-instant-preview-example/.tmp/data.db
+apps/strapi-instant-preview-example/.tmp/test-results
+# The e2e database and signed-in admin session.
+apps/strapi-instant-preview-example/.tmp/e2e
 .codemap
 .serena
 apps/strapi-instant-preview-example/public
+.codegraph

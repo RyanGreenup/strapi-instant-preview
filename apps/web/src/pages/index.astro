@@ -1,7 +1,5 @@
 ---
-import Blocks from '../components/Blocks.astro';
-import Media from '../components/Media.astro';
-import Page from '../layouts/Page.astro';
+import HomeView from '../components/HomeView.astro';
 import { getHome } from '../lib/cms';
 
 const home = await getHome();
@@ -10,26 +8,4 @@ if (!home) {
 }
 ---
 
-<Page seo={home.seo} title={home.hero?.title}>
-	{
-		home.hero && (
-			<section class="hero">
-				{home.hero.image && <Media media={home.hero.image} loading="eager" />}
-				<h1>{home.hero.title}</h1>
-				{home.hero.description && <p>{home.hero.description}</p>}
-			</section>
-		)
-	}
-	<Blocks blocks={home.blocks} />
-</Page>
-
-<style>
-	.hero {
-		text-align: center;
-	}
-	.hero :global(img) {
-		max-width: 100%;
-		height: auto;
-		border-radius: 12px;
-	}
-</style>
+<HomeView home={home} />

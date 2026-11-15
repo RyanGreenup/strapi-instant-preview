@@ -1,1 +1,11 @@
-{}
+{
+  "panel.title": "Live preview",
+  "panel.show": "Show preview",
+  "panel.hide": "Hide preview",
+  "panel.toggle": "Show or hide the preview",
+  "dock.resize": "Resize preview",
+  "dock.reload": "Reload preview",
+  "dock.open": "Open in a new tab",
+  "dock.close": "Hide preview",
+  "dock.frame": "Preview"
+}

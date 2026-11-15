@@ -1,0 +1,40 @@
+---
+import type { HomePage } from '@rs/contract';
+import Page from '../layouts/Page.astro';
+import Blocks from './Blocks.astro';
+import Media from './Media.astro';
+import PreviewBridge from './PreviewBridge.astro';
+
+interface Props {
+	home: HomePage;
+	/** Set by the preview route only. */
+	preview?: boolean;
+}
+
+const { home, preview = false } = Astro.props;
+---
+
+<Page seo={home.seo} title={home.hero?.title} preview={preview}>
+	{
+		home.hero && (
+			<section class="hero">
+				{home.hero.image && <Media media={home.hero.image} loading="eager" />}
+				<h1>{home.hero.title}</h1>
+				{home.hero.description && <p>{home.hero.description}</p>}
+			</section>
+		)
+	}
+	<Blocks blocks={home.blocks} />
+	{preview && <PreviewBridge />}
+</Page>
+
+<style>
+	.hero {
+		text-align: center;
+	}
+	.hero :global(img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 12px;
+	}
+</style>

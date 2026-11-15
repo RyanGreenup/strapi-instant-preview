@@ -11,6 +11,7 @@
     "develop": "strapi develop",
     "seed:example": "node ./scripts/seed.js",
     "start": "strapi start",
+    "test:e2e": "playwright test --config e2e",
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
@@ -18,6 +19,8 @@
   "dependencies": {
     "@moworks/strapi-admin-seed-plugin": "workspace:*",
     "@rs/strapi-draft-autosave": "workspace:*",
+    "@rs/strapi-instant-preview": "workspace:*",
+    "@rs/strapi-preview-helpers": "workspace:*",
     "@strapi/database": "5.62.0",
     "@strapi/plugin-cloud": "5.62.0",
     "@strapi/plugin-users-permissions": "5.62.0",
@@ -31,6 +34,7 @@
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",

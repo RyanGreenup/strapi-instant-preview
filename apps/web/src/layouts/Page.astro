@@ -10,6 +10,7 @@ interface Props {
 	/** Used when the page has no SEO component. */
 	title?: string | null;
 	description?: string | null;
+	preview?: boolean;
 }
 
 const site = await getGlobal();
@@ -23,6 +24,7 @@ const head = resolveSeo(site, Astro.props.seo, Astro.props);
 			{...head}
 			siteName={site.siteName}
 			favicon={site.favicon ? mediaUrl(site.favicon) : undefined}
+			preview={Astro.props.preview ?? false}
 		/>
 		<slot name="head" />
 	</head>

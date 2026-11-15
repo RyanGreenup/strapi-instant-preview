@@ -38,6 +38,9 @@ const config = ({
       debounceMs: env.int("DRAFT_AUTOSAVE_DEBOUNCE_MS", 500),
     },
   },
+  "instant-preview": {
+    enabled: true,
+  },
   "users-permissions": {
     config: {
       jwtManagement: "refresh",

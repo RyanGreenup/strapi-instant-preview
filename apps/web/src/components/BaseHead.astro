@@ -14,11 +14,12 @@ interface Props {
 	image?: string | undefined;
 	/** Absolute URL of the CMS favicon. */
 	favicon?: string | undefined;
+	preview?: boolean;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, siteName, image = FallbackImage.src, favicon } = Astro.props;
+const { title, description, siteName, image = FallbackImage.src, favicon, preview = false } = Astro.props;
 ---
 
 <!-- Global Metadata -->
@@ -42,7 +43,8 @@ const { title, description, siteName, image = FallbackImage.src, favicon } = Ast
 <ClientRouter />
 
 <!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} />
+{!preview && <link rel="canonical" href={canonicalURL} />}
+{preview && <meta name="robots" content="noindex,nofollow" />}
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
@@ -50,7 +52,7 @@ const { title, description, siteName, image = FallbackImage.src, favicon } = Ast
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content={Astro.url} />
+{!preview && <meta property="og:url" content={Astro.url} />}
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={new URL(image, Astro.url)} />

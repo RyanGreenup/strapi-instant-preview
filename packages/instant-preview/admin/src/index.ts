@@ -1,34 +1,40 @@
 import type { StrapiApp } from "@strapi/strapi/admin";
 
-import { Initializer } from "./components/Initializer";
-import { PluginIcon } from "./components/PluginIcon";
+import { LivePreviewPanel } from "./components/LivePreviewPanel";
 import { PLUGIN_ID } from "./pluginId";
 import { getTranslation } from "./utils/getTranslation";
 
-const translations = import.meta.glob<{ default: Record<string, string> }>(
+const translations = import.meta.glob<Record<string, string>>(
   "./translations/*.json",
+  { import: "default" },
 );
 
-/** Registers the admin menu, initializer, and localized messages with Strapi. */
+const isSidePanelAdder = (
+  value: unknown,
+): value is (panels: unknown[]) => void => typeof value === "function";
+
 const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
-    app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}`,
-      icon: PluginIcon,
-      intlLabel: {
-        id: `${PLUGIN_ID}.plugin.name`,
-        defaultMessage: PLUGIN_ID,
-      },
-      Component: () => import("./pages/App"),
-      permissions: [],
-    });
-
     app.registerPlugin({
       id: PLUGIN_ID,
-      initializer: Initializer,
-      isReady: false,
       name: PLUGIN_ID,
     });
+  },
+
+  bootstrap(app) {
+    // If Content Manager lacks this API, disable only the preview so the rest
+    // of the admin can load.
+    const contentManager: { apis?: Record<string, unknown> } | undefined =
+      app.getPlugin("content-manager");
+    const addEditViewSidePanel = contentManager?.apis?.["addEditViewSidePanel"];
+    if (!isSidePanelAdder(addEditViewSidePanel)) {
+      // oxlint-disable-next-line no-console -- The admin has no plugin logger.
+      console.warn(
+        `${PLUGIN_ID}: Content Manager does not expose addEditViewSidePanel; live preview is disabled`,
+      );
+      return;
+    }
+    addEditViewSidePanel([LivePreviewPanel]);
   },
 
   async registerTrads({ locales }) {
@@ -41,7 +47,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
             return { data: {}, locale };
           }
 
-          const { default: data } = await loadTranslation();
+          const data = await loadTranslation();
           const newData: Record<string, string> = {};
 
           for (const [key, value] of Object.entries(data)) {

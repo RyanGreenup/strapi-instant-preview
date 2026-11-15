@@ -1,0 +1,18 @@
+---
+import HomeView from '../../components/HomeView.astro';
+import { getHome } from '../../lib/cms';
+import { headers, verifyPreview } from '../../lib/preview';
+
+const preview = verifyPreview(Astro.url);
+if (!preview) {
+	return new Response('Forbidden', { status: 403, headers });
+}
+
+const home = await getHome(preview);
+if (!home) {
+	return new Response('Not found', { status: 404, headers });
+}
+for (const [name, value] of Object.entries(headers)) Astro.response.headers.set(name, value);
+---
+
+<HomeView home={home} preview />

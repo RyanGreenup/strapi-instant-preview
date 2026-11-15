@@ -1,0 +1,24 @@
+---
+import { strapiOrigin } from '../lib/preview';
+---
+
+<span data-strapi-preview-origin={strapiOrigin} hidden />
+
+<script>
+	import { startPreviewBridge } from '@rs/strapi-preview-helpers/client';
+	import { navigate } from 'astro:transitions/client';
+
+  // Processed scripts run once. 
+  // The bridge checks the marker on each event and is idle pages without it.
+	startPreviewBridge({
+		refresh: async (restoreScroll) => {
+			document.addEventListener('astro:after-swap', restoreScroll, { once: true });
+			try {
+				// A same-page hash URL makes the router scroll instead of fetching.
+				await navigate(window.location.pathname + window.location.search, { history: 'replace' });
+			} finally {
+				document.removeEventListener('astro:after-swap', restoreScroll);
+			}
+		},
+	});
+</script>
