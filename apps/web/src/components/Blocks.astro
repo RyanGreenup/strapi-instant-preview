@@ -1,0 +1,70 @@
+---
+import type { HomePage } from '@rs/contract';
+import { marked } from 'marked';
+import ArticleGrid from './ArticleGrid.astro';
+import Media from './Media.astro';
+
+interface Props {
+	/** The home page's zone is the widest; the about and article zones are subsets. */
+	blocks: HomePage['blocks'];
+}
+
+const { blocks } = Astro.props;
+// Rich text is Markdown written by CMS editors, who are trusted.
+const markdown = (body: string | null) => marked.parse(body ?? '', { async: false });
+---
+
+{
+	blocks.map((block) => {
+		switch (block.__component) {
+			case 'shared.rich-text':
+				return <div class="rich-text" set:html={markdown(block.body)} />;
+			case 'shared.quote':
+				return (
+					<blockquote>
+						<p>{block.body}</p>
+						{block.title && <cite>{block.title}</cite>}
+					</blockquote>
+				);
+			case 'shared.media':
+				return block.file && <Media media={block.file} class="block-media" />;
+			case 'shared.slider':
+				return (
+					<div class="slider">
+						{block.files.map((file) => (
+							<Media media={file} />
+						))}
+					</div>
+				);
+			case 'shared.link':
+				return (
+					<p>
+						<a href={block.href} target={block.newTab ? '_blank' : undefined}>
+							{block.label}
+						</a>
+					</p>
+				);
+			case 'sections.article-grid':
+				return <ArticleGrid grid={block} />;
+		}
+	})
+}
+
+<style>
+	:global(.block-media),
+	.slider :global(img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 12px;
+	}
+	.slider {
+		display: flex;
+		gap: 1rem;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+	}
+	.slider :global(img) {
+		flex: 0 0 80%;
+		scroll-snap-align: center;
+	}
+</style>

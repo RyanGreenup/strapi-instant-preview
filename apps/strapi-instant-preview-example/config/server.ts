@@ -4,7 +4,10 @@ const config = ({
   env,
 }: Core.Config.Shared.ConfigParams): Core.Config.Server => ({
   host: env("HOST", "0.0.0.0"),
-  port: env.int("PORT", 1337),
+  // STRAPI_PORT and STRAPI_URL come from the repo's .env.yaml (via mise). A
+  // bare PORT would also be read by the Astro node adapter.
+  port: env.int("STRAPI_PORT", env.int("PORT", 1337)),
+  url: env("STRAPI_URL", ""),
   app: {
     keys: env.array("APP_KEYS")!,
   },

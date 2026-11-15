@@ -1,0 +1,32 @@
+---
+import type { Media } from '@rs/contract';
+import { mediaUrl } from '../lib/cms';
+
+interface Props {
+	media: Media;
+	class?: string;
+	loading?: 'eager' | 'lazy';
+}
+
+const { media, class: className, loading = 'lazy' } = Astro.props;
+const src = mediaUrl(media);
+---
+
+{
+	media.mime.startsWith('video/') ? (
+		<video class={className} src={src} controls width={media.width} height={media.height} />
+	) : media.mime.startsWith('image/') ? (
+		<img
+			class={className}
+			src={src}
+			alt={media.alternativeText ?? ''}
+			width={media.width}
+			height={media.height}
+			loading={loading}
+		/>
+	) : (
+		<a class={className} href={src}>
+			{media.alternativeText ?? 'Download file'}
+		</a>
+	)
+}

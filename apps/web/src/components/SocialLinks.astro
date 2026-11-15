@@ -1,0 +1,22 @@
+---
+import type { SocialLink } from '@rs/contract';
+import SocialIcon from './SocialIcon.astro';
+
+interface Props {
+	links: SocialLink[];
+	class?: string;
+}
+
+const { links, class: className } = Astro.props;
+---
+
+<div class:list={['social-links', className]}>
+	{
+		links.map((link) => (
+			<a href={link.href} target={link.newTab ? '_blank' : undefined} rel={link.newTab ? 'noopener' : undefined}>
+				<span class:list={{ 'sr-only': link.platform !== null }}>{link.label}</span>
+				<SocialIcon platform={link.platform} />
+			</a>
+		))
+	}
+</div>

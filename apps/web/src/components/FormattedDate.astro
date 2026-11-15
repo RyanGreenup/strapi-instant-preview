@@ -11,5 +11,7 @@ const { date } = Astro.props;
 		year: 'numeric',
 		month: 'short',
 		day: 'numeric',
+		// CMS dates are calendar dates stored as UTC midnight.
+		timeZone: 'UTC',
 	})}
 </time>

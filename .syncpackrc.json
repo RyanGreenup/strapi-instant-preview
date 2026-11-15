@@ -13,8 +13,8 @@
       "preferVersion": "highestSemver"
     },
     {
-      "label": "Compiler API tools require TypeScript 6; plugin builds use TypeScript 7.",
-      "packages": ["@rs/strapi-plugins", "@rs/oxlint-config"],
+      "label": "Compiler API tools and astro check require TypeScript 6; plugin builds use TypeScript 7.",
+      "packages": ["@rs/strapi-plugins", "@rs/oxlint-config", "web"],
       "dependencies": ["typescript"],
       "dependencyTypes": ["dev"],
       "pinVersion": "catalog:typescript-api"

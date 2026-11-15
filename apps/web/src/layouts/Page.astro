@@ -1,0 +1,36 @@
+---
+import type { Seo } from '@rs/contract';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { getGlobal, mediaUrl, resolveSeo } from '../lib/cms';
+
+interface Props {
+	seo: Seo | null;
+	/** Used when the page has no SEO component. */
+	title?: string | null;
+	description?: string | null;
+}
+
+const site = await getGlobal();
+const head = resolveSeo(site, Astro.props.seo, Astro.props);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			{...head}
+			siteName={site.siteName}
+			favicon={site.favicon ? mediaUrl(site.favicon) : undefined}
+		/>
+		<slot name="head" />
+	</head>
+	<body>
+		<Header header={site.header} siteName={site.siteName} socialLinks={site.socialLinks} />
+		<main>
+			<slot />
+		</main>
+		<Footer footer={site.footer} siteName={site.siteName} socialLinks={site.socialLinks} />
+	</body>
+</html>
