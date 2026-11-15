@@ -1,9 +1,12 @@
+import type { ReactElement } from "react";
+
 import { Main } from "@strapi/design-system";
 import { useIntl } from "react-intl";
 
 import { getTranslation } from "../utils/getTranslation";
 
-const HomePage = () => {
+/** Renders the plugin's admin landing page. */
+const HomePage = (): ReactElement => {
   const { formatMessage } = useIntl();
 
   return (

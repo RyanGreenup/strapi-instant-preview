@@ -20,7 +20,15 @@ const settings = {
   maxCognitiveComplexity: 10,
 };
 export const base: OxlintConfig = defineConfig({
-  extends: [recommended, magicNumbers, namedExports, funcStyle, vitestCfg, jsdocCfg, tsCfg],
+  extends: [
+    recommended,
+    magicNumbers,
+    namedExports,
+    funcStyle,
+    vitestCfg,
+    jsdocCfg,
+    tsCfg,
+  ],
   options: {
     typeAware: true,
     typeCheck: true,
@@ -103,7 +111,10 @@ export const base: OxlintConfig = defineConfig({
     // which values it treats as absent, and `??` changes behavior when the type can
     // include null. The `||` half is important as falsy value (false, 0, "", NaN)
     // could fall through where we meant undefined / null.
-    "typescript/prefer-nullish-coalescing": ["error", { ignoreTernaryTests: true }],
+    "typescript/prefer-nullish-coalescing": [
+      "error",
+      { ignoreTernaryTests: true },
+    ],
     "typescript/use-unknown-in-catch-callback-variable": "error",
     "typescript/method-signature-style": "error",
     "typescript/promise-function-async": [
@@ -129,7 +140,10 @@ export const base: OxlintConfig = defineConfig({
     "jsdoc/require-returns": "off",
     // Separate architectural signals: module size, procedure size, and
     // branching difficulty.
-    "eslint/max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
+    "eslint/max-lines": [
+      "error",
+      { max: 300, skipBlankLines: true, skipComments: true },
+    ],
     "eslint/max-statements": ["error", settings.maxStatements],
     "sonarjs/cognitive-complexity": ["error", settings.maxCognitiveComplexity],
     "eslint/max-params": ["error", settings.maxParams],
@@ -222,7 +236,12 @@ export const base: OxlintConfig = defineConfig({
     },
     {
       // CLI composition is commonly long but intentionally linear.
-      files: ["**/main.ts", "**/cli.ts", "**/commands/index.ts", "**/commands/register.ts"],
+      files: [
+        "**/main.ts",
+        "**/cli.ts",
+        "**/commands/index.ts",
+        "**/commands/register.ts",
+      ],
       rules: {
         "eslint/max-statements": "off",
       },

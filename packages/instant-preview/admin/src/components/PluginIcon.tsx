@@ -1,5 +1,10 @@
+import type { JSX } from "react";
+
 import { PuzzlePiece } from "@strapi/icons";
 
-const PluginIcon = () => <PuzzlePiece />;
+/** Renders the icon used by the plugin's admin menu link. */
+function PluginIcon(): JSX.Element {
+  return <PuzzlePiece />;
+}
 
 export { PluginIcon };

@@ -5,7 +5,9 @@ import { pluginSpecs } from "./plugins/specs.ts";
 import type { GenerationResult } from "./plugins/types.ts";
 
 /** Return exit code 1 when any result failed, otherwise `undefined`. */
-export function exitCodeFor(results: readonly GenerationResult[]): 1 | undefined {
+export function exitCodeFor(
+  results: readonly GenerationResult[],
+): 1 | undefined {
   return results.some((result) => result.status === "failed") ? 1 : undefined;
 }
 

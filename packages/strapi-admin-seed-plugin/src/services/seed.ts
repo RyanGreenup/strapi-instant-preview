@@ -64,7 +64,7 @@ interface SeedAttributes {
 interface SeedService {
   /**
    *  Seeds the super admin and the API token provided by the plugin config.
-   *  
+   *
    *  Call it from the app's `bootstrap()` because  plugin lifecycles run before the
    *  admin roles exist and the HTTP server is not yet listening, so a failure would
    *  block boot.

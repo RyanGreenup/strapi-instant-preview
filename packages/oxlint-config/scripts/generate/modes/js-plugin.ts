@@ -6,7 +6,10 @@ import { collectRules } from "../rules/collect-rules.ts";
  *
  * Throws when the spec omits `jsPluginName` or `jsPluginSpecifier`.
  */
-export function createJsPluginConfig(spec: PluginSpec, config: unknown): unknown {
+export function createJsPluginConfig(
+  spec: PluginSpec,
+  config: unknown,
+): unknown {
   const { jsPluginName, jsPluginSpecifier } = spec;
   if (
     jsPluginName === undefined ||
@@ -14,7 +17,9 @@ export function createJsPluginConfig(spec: PluginSpec, config: unknown): unknown
     jsPluginSpecifier === undefined ||
     jsPluginSpecifier.length === 0
   ) {
-    throw new Error(`${spec.name} requires jsPluginName and jsPluginSpecifier in jsPlugin mode`);
+    throw new Error(
+      `${spec.name} requires jsPluginName and jsPluginSpecifier in jsPlugin mode`,
+    );
   }
 
   return {

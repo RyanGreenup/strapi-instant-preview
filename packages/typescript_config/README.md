@@ -87,3 +87,13 @@ to the app, not this config package:
   ]
 }
 ```
+
+### Plugins built with tsdown
+
+`instant-preview`, `autosave-draft`, and `strapi-admin-seed-plugin` extend
+`base.json` rather than the Strapi application preset: tsgo checks their types,
+and tsdown emits their JavaScript and declarations. Admin plugins add React JSX
+settings locally; the server plugin emits CommonJS for Strapi's loader.
+
+This package's `lint`, `format`, and `fix` scripts use the shared oxfmt
+configuration in `packages/oxlint-config`.

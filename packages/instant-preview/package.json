@@ -1,7 +1,13 @@
 {
   "name": "@rs/strapi-instant-preview",
   "version": "0.0.1",
+  "description": "Instantly preview a draft in a split by autosaving",
   "keywords": [],
+  "license": "MIT",
+  "author": "Ryan Greenup <ryanxgreenup@gmail.com>",
+  "files": [
+    "dist"
+  ],
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
@@ -13,38 +19,40 @@
       "default": "./dist/admin/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
-    "watch": "tsdown --watch",
-    "watch:link": "strapi-plugin watch:link",
-    "verify": "strapi-plugin verify",
-    "test:ts:front": "tsc -p admin/tsconfig.json"
+    "check-types": "tsgo --skipLibCheck --noEmit",
+    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --write .",
+    "fix": "oxlint --fix --fix-suggestions --type-aware --type-check .",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {},
   "devDependencies": {
+    "@rs/oxlint-config": "workspace:*",
+    "@rs/typescript-config": "workspace:*",
     "@strapi/design-system": "^2.3.1",
     "@strapi/icons": "^2.3.1",
-    "@strapi/sdk-plugin": "^6.1.1",
     "@strapi/strapi": "^5.62.0",
-    "@strapi/typescript-utils": "^5.62.0",
+    "@types/node": "catalog:",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
-    "prettier": "^3.10.1",
+    "@typescript/native-preview": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.9",
     "react-router-dom": "^6.30.6",
     "styled-components": "^6.6.0",
-    "tsdown": "^0.23.7",
-    "typescript": "^5.9.3"
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@strapi/design-system": "^2.3.1",
     "@strapi/icons": "^2.3.1",
-    "@strapi/sdk-plugin": "^6.1.1",
     "@strapi/strapi": "^5.62.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -56,9 +64,5 @@
     "kind": "plugin",
     "displayName": "Instant Preview",
     "description": "Instantly preview a draft in a split by autosaving"
-  },
-  "name": "instant-preview",
-  "description": "Instantly preview a draft in a split by autosaving",
-  "license": "MIT",
-  "author": "Ryan Greenup <ryanxgreenup@gmail.com>"
+  }
 }

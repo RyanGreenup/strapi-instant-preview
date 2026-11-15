@@ -6,7 +6,9 @@ import type { ESTree } from "@oxlint/plugins";
  * Every other parent is not a for-loop head, so the declaration remains
  * subject to the rule.
  */
-export function isInitializedByForLoop(declaration: Readonly<ESTree.VariableDeclaration>): boolean {
+export function isInitializedByForLoop(
+  declaration: Readonly<ESTree.VariableDeclaration>,
+): boolean {
   const { parent } = declaration;
 
   if (parent.type === "ForInStatement" || parent.type === "ForOfStatement") {

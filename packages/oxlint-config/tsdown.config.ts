@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   dts: {
     sourcemap: true,
-    generator: "tsgo",
+    generator: "tsc",
   },
   entry: {
     index: "./src/index.ts",

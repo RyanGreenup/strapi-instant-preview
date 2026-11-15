@@ -7,7 +7,10 @@ import { basename, dirname, join } from "node:path";
  *
  * This writes atomically, via a temp file and rename.
  */
-export async function writeJson(outputPath: string, data: unknown): Promise<void> {
+export async function writeJson(
+  outputPath: string,
+  data: unknown,
+): Promise<void> {
   const outputDirectory = dirname(outputPath);
   const temporaryPath = join(
     outputDirectory,
@@ -17,7 +20,11 @@ export async function writeJson(outputPath: string, data: unknown): Promise<void
   await mkdir(outputDirectory, { recursive: true });
 
   try {
-    await writeFile(temporaryPath, `${JSON.stringify(data, undefined, 2)}\n`, "utf8");
+    await writeFile(
+      temporaryPath,
+      `${JSON.stringify(data, undefined, 2)}\n`,
+      "utf8",
+    );
     await rename(temporaryPath, outputPath);
   } catch (error) {
     try {

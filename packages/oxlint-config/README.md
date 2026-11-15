@@ -60,6 +60,11 @@ The recommended rules are generated against the package's pinned Oxlint version.
 Avoid older globally installed Oxlint binaries because they may not recognize
 every generated rule.
 
+The lint-config package pins TypeScript 6 for the compiler API used by
+typescript-eslint during rule generation, and builds its declarations with
+`generator: "tsc"`. Plugin consumers use the workspace TypeScript 7 catalog and
+tsgo declaration generation independently.
+
 ## Formatting
 
 The package also provides the shared oxfmt config as `oxfmt.json`, exported at

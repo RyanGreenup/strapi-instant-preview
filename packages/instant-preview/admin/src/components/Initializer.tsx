@@ -2,11 +2,12 @@ import { useEffect, useRef } from "react";
 
 import { PLUGIN_ID } from "../pluginId";
 
-type InitializerProps = {
+interface InitializerProps {
   setPlugin: (id: string) => void;
-};
+}
 
-const Initializer = ({ setPlugin }: InitializerProps) => {
+/** Marks the plugin ready after its initializer mounts. */
+function Initializer({ setPlugin }: InitializerProps): null {
   const ref = useRef(setPlugin);
 
   useEffect(() => {
@@ -14,6 +15,6 @@ const Initializer = ({ setPlugin }: InitializerProps) => {
   }, []);
 
   return null;
-};
+}
 
 export { Initializer };

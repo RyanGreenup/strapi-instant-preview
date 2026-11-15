@@ -25,7 +25,9 @@ export async function generateAll({
   logger = consoleLogger,
 }: GenerateAllOptions): Promise<readonly GenerationResult[]> {
   const resolvedOutDir = resolve(outDir);
-  const results = await Promise.all(specs.map((spec) => generatePlugin(spec, resolvedOutDir)));
+  const results = await Promise.all(
+    specs.map((spec) => generatePlugin(spec, resolvedOutDir)),
+  );
 
   for (const result of results) {
     if (result.status === "generated") {
@@ -33,13 +35,22 @@ export async function generateAll({
     } else if (result.status === "skipped") {
       logger.warn(`skipped ${result.plugin}: ${result.reason}`);
     } else {
-      logger.error(`failed ${result.plugin}: ${formatError(result.error)}`, result.error);
+      logger.error(
+        `failed ${result.plugin}: ${formatError(result.error)}`,
+        result.error,
+      );
     }
   }
 
-  const generatedCount = results.filter((result) => result.status === "generated").length;
-  const skippedCount = results.filter((result) => result.status === "skipped").length;
-  const failedCount = results.filter((result) => result.status === "failed").length;
+  const generatedCount = results.filter(
+    (result) => result.status === "generated",
+  ).length;
+  const skippedCount = results.filter(
+    (result) => result.status === "skipped",
+  ).length;
+  const failedCount = results.filter(
+    (result) => result.status === "failed",
+  ).length;
 
   logger.info(
     `complete: ${generatedCount} generated, ${skippedCount} skipped, ${failedCount} failed`,

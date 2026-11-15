@@ -1,3 +1,37 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+catalog:
+  "@bomb.sh/tab": 0.0.22
+  "@eslint/js": 10.0.1
+  "@oxlint/migrate": 1.93.0
+  "@oxlint/plugins": 1.93.0
+  "@tsconfig/strictest": 2.0.9
+  "@types/node": 26.6.6
+  "@typescript/native-preview": 7.0.0-dev.20260707.2
+  "@vitest/eslint-plugin": 1.6.28
+  ajv: 8.20.0
+  bumpp: 12.3.0
+  citty: 0.2.2
+  eslint: 10.15.0
+  eslint-plugin-import: 2.32.0
+  eslint-plugin-jest: 29.17.1
+  eslint-plugin-jsdoc: 65.4.7
+  eslint-plugin-jsx-a11y: 6.10.2
+  eslint-plugin-n: 18.5.0
+  eslint-plugin-promise: 7.3.0
+  eslint-plugin-solid: 0.19.0
+  eslint-plugin-sonarjs: 4.2.2
+  eslint-plugin-unicorn: 79.0.0
+  oxfmt: 0.78.0
+  oxlint: 1.93.0
+  oxlint-tsgolint: 7.0.2007
+  tsdown: 0.23.7
+  typescript: 7.0.2
+  typescript-eslint: 8.72.2
+  vitest: 5.1.0
+
+minimumReleaseAgeExclude:
+  - eslint-plugin-jest@29.17.1
+  - eslint-plugin-jsdoc@65.4.7

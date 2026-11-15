@@ -1,13 +1,15 @@
-import { getTranslation } from './utils/getTranslation';
-import { PLUGIN_ID } from './pluginId';
-import { Initializer } from './components/Initializer';
-import { PluginIcon } from './components/PluginIcon';
+import type { StrapiApp } from "@strapi/strapi/admin";
 
-import type { StrapiApp } from '@strapi/strapi/admin';
+import { Initializer } from "./components/Initializer";
+import { PluginIcon } from "./components/PluginIcon";
+import { PLUGIN_ID } from "./pluginId";
+import { getTranslation } from "./utils/getTranslation";
 
-const translations = import.meta.glob<{ default: Record<string, string> }>('./translations/*.json');
+const translations = import.meta.glob<{ default: Record<string, string> }>(
+  "./translations/*.json",
+);
 
-const plugin: StrapiApp['appPlugins'][string] = {
+const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
     app.addMenuLink({
       to: `plugins/${PLUGIN_ID}`,
@@ -16,7 +18,7 @@ const plugin: StrapiApp['appPlugins'][string] = {
         id: `${PLUGIN_ID}.plugin.name`,
         defaultMessage: PLUGIN_ID,
       },
-      Component: () => import('./pages/App'),
+      Component: () => import("./pages/App"),
       permissions: [],
     });
 
@@ -28,24 +30,28 @@ const plugin: StrapiApp['appPlugins'][string] = {
     });
   },
 
-  registerTrads({ locales }) {
+  async registerTrads({ locales }) {
     return Promise.all(
       locales.map(async (locale) => {
         try {
-          const { default: data } = await translations[`./translations/${locale}.json`]();
+          const loadTranslation = translations[`./translations/${locale}.json`];
+          if (loadTranslation === undefined) {
+            return { data: {}, locale };
+          }
+
+          const { default: data } = await loadTranslation();
 
           const newData: Record<string, string> = {};
-          const keys = Object.keys(data);
 
-          for (const key of keys) {
-            newData[getTranslation(key)] = data[key];
+          for (const [key, message] of Object.entries(data)) {
+            newData[getTranslation(key)] = message;
           }
 
           return { data: newData, locale };
         } catch {
           return { data: {}, locale };
         }
-      })
+      }),
     );
   },
 };

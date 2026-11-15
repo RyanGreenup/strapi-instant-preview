@@ -21,7 +21,8 @@ const plugin = eslintCompatPlugin({
             "Require variable initialization unless JSX assigns the variable through a ref",
         },
         messages: {
-          initialized: "Variable '{{name}}' should be initialized on declaration.",
+          initialized:
+            "Variable '{{name}}' should be initialized on declaration.",
         },
         schema: [
           {
@@ -40,7 +41,10 @@ function hasAmbientAncestor(node: Readonly<ESTree.Node>): boolean {
   let current: ESTree.Node | null = node.parent;
 
   while (current !== null) {
-    if (current.type === "TSModuleDeclaration" && (current.declare || current.global)) {
+    if (
+      current.type === "TSModuleDeclaration" &&
+      (current.declare || current.global)
+    ) {
       return true;
     }
     current = current.parent;
@@ -95,7 +99,11 @@ function createOnce(context: Context): VisitorWithHooks {
       // the deferred assignment (TS 2.7, "Definite Assignment Assertions"). Treat it
       // as satisfying the rule, the same way an initializer would.
       // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-7.html#definite-assignment-assertions
-      if (node.init !== null || node.definite === true || node.id.type !== "Identifier") {
+      if (
+        node.init !== null ||
+        node.definite === true ||
+        node.id.type !== "Identifier"
+      ) {
         return;
       }
 

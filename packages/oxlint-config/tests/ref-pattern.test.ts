@@ -7,7 +7,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isRecord, isUnknownArray, parseJson } from "../scripts/generate/guards.ts";
+import {
+  isRecord,
+  isUnknownArray,
+  parseJson,
+} from "../scripts/generate/guards.ts";
 
 interface LintCase {
   code: string;
@@ -26,22 +30,54 @@ const RULE_CODE = "solid-js-custom(init-declarations)";
 
 const passCases: LintCase[] = [
   { code: "var foo = null;", errors: 0, name: "var initialized to null" },
-  { code: "foo = true;", errors: 0, name: "bare assignment without declaration" },
-  { code: "var foo = 1, bar = false, baz = {};", errors: 0, name: "multiple initialized vars" },
+  {
+    code: "foo = true;",
+    errors: 0,
+    name: "bare assignment without declaration",
+  },
+  {
+    code: "var foo = 1, bar = false, baz = {};",
+    errors: 0,
+    name: "multiple initialized vars",
+  },
   {
     code: "function foo() { var foo = 0; var bar = []; }",
     errors: 0,
     name: "initialized vars in function",
   },
-  { code: "var fn = function() {};", errors: 0, name: "function expression assignment" },
+  {
+    code: "var fn = function() {};",
+    errors: 0,
+    name: "function expression assignment",
+  },
   { code: "var foo = bar = 2;", errors: 0, name: "chained assignment" },
-  { code: "for (var i = 0; i < 1; i++) {}", errors: 0, name: "for statement init" },
-  { code: "for (var i; i < 1; i++) {}", errors: 0, name: "uninitialized for statement init" },
-  { code: "for (var foo in []) {}", errors: 0, name: "for-in left declaration" },
-  { code: "for (var foo of []) {}", errors: 0, name: "for-of left declaration" },
+  {
+    code: "for (var i = 0; i < 1; i++) {}",
+    errors: 0,
+    name: "for statement init",
+  },
+  {
+    code: "for (var i; i < 1; i++) {}",
+    errors: 0,
+    name: "uninitialized for statement init",
+  },
+  {
+    code: "for (var foo in []) {}",
+    errors: 0,
+    name: "for-in left declaration",
+  },
+  {
+    code: "for (var foo of []) {}",
+    errors: 0,
+    name: "for-of left declaration",
+  },
   { code: "let a = true;", errors: 0, name: "initialized let" },
   { code: "const a = {};", errors: 0, name: "initialized const" },
-  { code: "function f() { using a = foo(); }", errors: 0, name: "using declaration" },
+  {
+    code: "function f() { using a = foo(); }",
+    errors: 0,
+    name: "using declaration",
+  },
   {
     code: "async function f() { await using a = foo(); }",
     errors: 0,
@@ -157,8 +193,16 @@ const passCases: LintCase[] = [
 
 const failCases: LintCase[] = [
   { code: "var foo;", errors: 1, name: "uninitialized var" },
-  { code: "for (var a in []) var foo;", errors: 1, name: "uninitialized var in for-in body" },
-  { code: "var foo, bar = false, baz;", errors: 2, name: "partially initialized list" },
+  {
+    code: "for (var a in []) var foo;",
+    errors: 1,
+    name: "uninitialized var in for-in body",
+  },
+  {
+    code: "var foo, bar = false, baz;",
+    errors: 2,
+    name: "partially initialized list",
+  },
   {
     code: "function foo() { var foo = 0; var bar; }",
     errors: 1,
@@ -180,7 +224,11 @@ const failCases: LintCase[] = [
     errors: 2,
     name: "mixed kinds with two uninitialized",
   },
-  { code: "let arr: string;", errors: 1, name: "uninitialized let with type annotation" },
+  {
+    code: "let arr: string;",
+    errors: 1,
+    name: "uninitialized let with type annotation",
+  },
   {
     code: "namespace myLib { let numberOfGreetings: number; }",
     errors: 1,
@@ -321,7 +369,10 @@ function caseFilename(lintCase: LintCase, index: number): string {
 function runOxlint(cwd: string): OxlintDiagnostic[] {
   const oxlintBin = join(packageRoot, "node_modules", ".bin", "oxlint");
 
-  const result = spawnSync(oxlintBin, ["--format", "json", "."], { cwd, encoding: "utf8" });
+  const result = spawnSync(oxlintBin, ["--format", "json", "."], {
+    cwd,
+    encoding: "utf8",
+  });
 
   if (result.error !== undefined) {
     throw result.error;
@@ -392,13 +443,18 @@ describe("solid-js-custom/init-declarations", () => {
 
     const config = {
       categories: { correctness: "off" },
-      jsPlugins: [join(packageRoot, "src", "plugins", "solid-ref-pattern", "index.ts")],
+      jsPlugins: [
+        join(packageRoot, "src", "plugins", "solid-ref-pattern", "index.ts"),
+      ],
       rules: { "solid-js-custom/init-declarations": ["error", "always"] },
     };
     writeFileSync(join(fixture.dir, ".oxlintrc.json"), JSON.stringify(config));
 
     for (const [index, lintCase] of allCases.entries()) {
-      writeFileSync(join(fixture.dir, caseFilename(lintCase, index)), `${lintCase.code}\n`);
+      writeFileSync(
+        join(fixture.dir, caseFilename(lintCase, index)),
+        `${lintCase.code}\n`,
+      );
     }
 
     for (const diagnostic of runOxlint(fixture.dir)) {
@@ -412,7 +468,11 @@ describe("solid-js-custom/init-declarations", () => {
     rmSync(fixture.dir, { force: true, recursive: true });
   });
 
-  it.each(allCases.map((lintCase, index) => [lintCase.name, lintCase, index] as const))(
+  it.each(
+    allCases.map(
+      (lintCase, index) => [lintCase.name, lintCase, index] as const,
+    ),
+  )(
     "%s",
     (_name, lintCase, index) => {
       const diagnostics = partitionDiagnostics(caseFilename(lintCase, index));

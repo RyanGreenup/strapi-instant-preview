@@ -39,7 +39,10 @@ async function readJsonFile(path: string): Promise<unknown> {
 }
 
 /** Records what the generator reported, so the summary lines can be asserted on. */
-function recordingLogger(): { messages: Record<string, string[]>; logger: Logger } {
+function recordingLogger(): {
+  messages: Record<string, string[]>;
+  logger: Logger;
+} {
   const messages: Record<string, string[]> = { info: [], warn: [], error: [] };
   const record = (channel: string, message: string): void => {
     messages[channel]?.push(message);
@@ -92,7 +95,9 @@ describe("writeJson", () => {
     await writeJson(outputPath, { stale: true });
     await writeJson(outputPath, { current: true });
 
-    await expect(readFile(outputPath, "utf8")).resolves.toBe('{\n  "current": true\n}\n');
+    await expect(readFile(outputPath, "utf8")).resolves.toBe(
+      '{\n  "current": true\n}\n',
+    );
   }, 10_000);
 });
 
@@ -108,7 +113,9 @@ describe("generatePlugin", () => {
       plugin: "fixture",
       ruleCount: 2,
     });
-    await expect(readJsonFile(join(directory, "fixture-recommended.json"))).resolves.toStrictEqual({
+    await expect(
+      readJsonFile(join(directory, "fixture-recommended.json")),
+    ).resolves.toStrictEqual({
       jsPlugins: [{ name: "fixture", specifier: "eslint-plugin-fixture" }],
       rules: {
         "fixture/error": "error",
@@ -120,12 +127,17 @@ describe("generatePlugin", () => {
   it("writes an empty stub when a plugin cannot be imported", async () => {
     const directory = await temporaryDirectory();
     const result = await generatePlugin(
-      fixtureSpec({ name: "missing", specifier: "definitely-not-installed-plugin" }),
+      fixtureSpec({
+        name: "missing",
+        specifier: "definitely-not-installed-plugin",
+      }),
       directory,
     );
 
     expect(result).toMatchObject({ status: "skipped", plugin: "missing" });
-    await expect(readJsonFile(join(directory, "missing-recommended.json"))).resolves.toStrictEqual({
+    await expect(
+      readJsonFile(join(directory, "missing-recommended.json")),
+    ).resolves.toStrictEqual({
       rules: {},
     });
   }, 10_000);
@@ -143,9 +155,15 @@ describe("generatePlugin", () => {
 
     const blockedOutputDirectory = join(directory, "not-a-directory");
     await writeFile(blockedOutputDirectory, "blocked", "utf8");
-    const writeFailure = await generatePlugin(fixtureSpec(), blockedOutputDirectory);
+    const writeFailure = await generatePlugin(
+      fixtureSpec(),
+      blockedOutputDirectory,
+    );
 
-    expect(selectorFailure).toMatchObject({ status: "failed", plugin: "fixture" });
+    expect(selectorFailure).toMatchObject({
+      status: "failed",
+      plugin: "fixture",
+    });
     expect(writeFailure).toMatchObject({ status: "failed", plugin: "fixture" });
   }, 10_000);
 });
@@ -157,14 +175,20 @@ describe("generateAll", () => {
     const directory = await temporaryDirectory();
     const { messages, logger } = recordingLogger();
 
-    const results = await generateAll({ specs: summarySpecs(), outDir: directory, logger });
+    const results = await generateAll({
+      specs: summarySpecs(),
+      outDir: directory,
+      logger,
+    });
 
     expect(results.map((result) => result.plugin)).toStrictEqual([
       "generated",
       "skipped",
       "failed",
     ]);
-    expect(messages["info"]?.at(-1)).toBe("complete: 1 generated, 1 skipped, 1 failed");
+    expect(messages["info"]?.at(-1)).toBe(
+      "complete: 1 generated, 1 skipped, 1 failed",
+    );
     expect(messages["warn"]).toHaveLength(1);
     expect(messages["error"]).toHaveLength(1);
   }, 10_000);
@@ -173,7 +197,11 @@ describe("generateAll", () => {
     const directory = await temporaryDirectory();
     const { logger } = recordingLogger();
 
-    const results = await generateAll({ specs: summarySpecs(), outDir: directory, logger });
+    const results = await generateAll({
+      specs: summarySpecs(),
+      outDir: directory,
+      logger,
+    });
 
     expect(exitCodeFor(results)).toBe(1);
     expect(exitCodeFor(results.slice(0, 2))).toBeUndefined();

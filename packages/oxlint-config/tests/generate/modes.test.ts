@@ -14,7 +14,9 @@ const jsPluginSpec: PluginSpec = {
 
 describe("createJsPluginConfig", () => {
   it("adds the runtime plugin and normalized rules", () => {
-    expect(createJsPluginConfig(jsPluginSpec, { rules: { rule: 2 } })).toStrictEqual({
+    expect(
+      createJsPluginConfig(jsPluginSpec, { rules: { rule: 2 } }),
+    ).toStrictEqual({
       jsPlugins: [{ name: "fixture", specifier: "eslint-plugin-fixture" }],
       rules: { rule: "error" },
     });

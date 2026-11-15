@@ -1,5 +1,6 @@
 import { PLUGIN_ID } from "../pluginId";
 
-const getTranslation = (id: string) => `${PLUGIN_ID}.${id}`;
+/** Prefixes a translation key with the plugin identifier. */
+const getTranslation = (id: string): string => `${PLUGIN_ID}.${id}`;
 
 export { getTranslation };

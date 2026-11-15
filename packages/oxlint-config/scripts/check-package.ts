@@ -8,7 +8,9 @@ interface PackageManifest {
 }
 
 async function readManifest(): Promise<PackageManifest> {
-  const parsed = parseJson(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  const parsed = parseJson(
+    await readFile(new URL("../package.json", import.meta.url), "utf8"),
+  );
   if (!isRecord(parsed)) {
     throw new Error("package.json is not an object");
   }
@@ -56,7 +58,9 @@ function exportTargets(conditions: unknown): readonly string[] {
     throw new Error(`unsupported exports entry: ${JSON.stringify(conditions)}`);
   }
 
-  return Object.values(conditions).filter((target) => typeof target === "string");
+  return Object.values(conditions).filter(
+    (target) => typeof target === "string",
+  );
 }
 
 const manifest = await readManifest();
@@ -68,12 +72,16 @@ for (const [subpath, conditions] of Object.entries(manifest.exports)) {
       throw new Error(`${subpath} exposes unpublished source: ${target}`);
     }
     if (target !== "./package.json" && !packedFiles.has(target)) {
-      throw new Error(`${subpath} points to a file missing from the package: ${target}`);
+      throw new Error(
+        `${subpath} points to a file missing from the package: ${target}`,
+      );
     }
     if (target.endsWith(".mjs")) {
       const declaration = target.replace(/\.mjs$/u, ".d.mts");
       if (!packedFiles.has(declaration)) {
-        throw new Error(`${subpath} is missing its declaration file: ${declaration}`);
+        throw new Error(
+          `${subpath} is missing its declaration file: ${declaration}`,
+        );
       }
     }
   }
@@ -87,7 +95,9 @@ if (
   Object.keys(publicApi).toSorted().join(",") !==
   "base,cliCfg,electron,playwright,react,solid,tanstackRouter,vite"
 ) {
-  throw new Error(`Unexpected public API: ${Object.keys(publicApi).toSorted().join(",")}`);
+  throw new Error(
+    `Unexpected public API: ${Object.keys(publicApi).toSorted().join(",")}`,
+  );
 }
 
 await Promise.all([

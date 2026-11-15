@@ -17,6 +17,7 @@ function fakeStrapi(rows: Row[]): SeedStrapi {
       get: () => ({
         ...plugin.config.default({ env: (_key, fallback) => fallback }),
         apiTokenName: "preview",
+        apiTokenEnv: "ADMIN_SEED_API_TOKEN",
       }),
     },
     service: () => ({ hash: (key: string) => `hash:${key}` }),

@@ -1,4 +1,4 @@
-import { base } from "@moworks/oxlint-config";
+import { base } from "@rs/oxlint-config";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({

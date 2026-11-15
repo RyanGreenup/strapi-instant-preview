@@ -77,3 +77,19 @@ The token is reconciled on every boot in both modes: the environment is the
 source of truth for the token with that name. The value must be at least 32
 characters, e.g. `openssl rand -hex 64`. Strapi stores only its hash, so the
 admin UI cannot show it.
+
+## Development
+
+From this package directory:
+
+```sh
+pnpm run build
+pnpm run check-types
+pnpm run lint
+pnpm run test
+```
+
+`pnpm run format` applies the shared formatter configuration; `pnpm run fix`
+applies lint fixes. TypeScript extends `@rs/typescript-config/base.json`. tsdown
+generates declarations with tsgo and emits CommonJS `dist/index.js` because
+Strapi loads server plugins with `require`.

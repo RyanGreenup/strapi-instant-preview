@@ -73,7 +73,7 @@
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:",
+    "typescript": "6.0.3",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   },

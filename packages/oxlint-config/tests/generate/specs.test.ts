@@ -23,7 +23,9 @@ function specFor(name: string): PluginSpec {
   return spec;
 }
 
-async function readGeneratedRules(path: string): Promise<Record<string, unknown>> {
+async function readGeneratedRules(
+  path: string,
+): Promise<Record<string, unknown>> {
   const output = parseJson(await readFile(path, "utf8"));
   if (!isRecord(output) || !isRecord(output["rules"])) {
     throw new Error(`${path} has no rules map`);
@@ -47,7 +49,9 @@ describe("declared plugin specs", () => {
 
     expect(result).toMatchObject({ status: "generated", plugin: "typescript" });
 
-    const rules = await readGeneratedRules(join(directory, "typescript-recommended.json"));
+    const rules = await readGeneratedRules(
+      join(directory, "typescript-recommended.json"),
+    );
 
     expect(Object.keys(rules).length).toBeGreaterThan(0);
     expect(rules).toHaveProperty("typescript/no-explicit-any", "error");

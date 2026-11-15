@@ -27,12 +27,17 @@ function pluginConfig(module: PluginModule): PluginConfigContainer {
  * of blocks (base, eslint-recommended, recommended). We only want the
  * `recommended` block's rules.
  */
-function flatBlockRules(config: unknown, blockName: string): Record<string, unknown> {
+function flatBlockRules(
+  config: unknown,
+  blockName: string,
+): Record<string, unknown> {
   if (!isUnknownArray(config)) {
     throw new Error(`expected a flat-config array to search for ${blockName}`);
   }
 
-  const matches = config.filter((block) => isRecord(block) && block["name"] === blockName);
+  const matches = config.filter(
+    (block) => isRecord(block) && block["name"] === blockName,
+  );
   const rules: Record<string, unknown> = {};
 
   for (const block of matches) {

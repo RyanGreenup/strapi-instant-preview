@@ -18,7 +18,12 @@ export const namedExports = defineConfig({
     // reliable auto-imports, easy CJS/ESM interop, better tree-shaking.
     // Exceptions exist only for an external contract, e.g. config files
     {
-      files: ["**/*.config.*", "**/.storybook/**", "**/*.stories.*", "**/pages/**"],
+      files: [
+        "**/*.config.*",
+        "**/.storybook/**",
+        "**/*.stories.*",
+        "**/pages/**",
+      ],
       rules: {
         "import/no-default-export": "off",
       },

@@ -39,10 +39,10 @@ describe("public presets", () => {
   it("provides strict React linting without dropping the base plugins", () => {
     expect(react.extends).toContain(base);
     expect(react.extends).toHaveLength(1);
-    expect([react.plugins?.includes("jsx-a11y"), react.plugins?.includes("react")]).toStrictEqual([
-      true,
-      true,
-    ]);
+    expect([
+      react.plugins?.includes("jsx-a11y"),
+      react.plugins?.includes("react"),
+    ]).toStrictEqual([true, true]);
     expect(react).toMatchObject({
       options: {
         reportUnusedDisableDirectives: "error",
@@ -52,7 +52,10 @@ describe("public presets", () => {
     });
     expect(react.rules).toMatchObject({
       "react/exhaustive-deps": "error",
-      "react/jsx-filename-extension": ["error", { extensions: [".jsx", ".tsx"] }],
+      "react/jsx-filename-extension": [
+        "error",
+        { extensions: [".jsx", ".tsx"] },
+      ],
       "react/jsx-no-target-blank": "error",
       "react/no-danger": "error",
       "react/no-unknown-property": "error",
