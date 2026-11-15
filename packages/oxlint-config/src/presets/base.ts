@@ -1,12 +1,14 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
+
 import { funcStyle } from "../internal/policies/func-style";
+import { jsdocCfg } from "../internal/policies/jsdoc";
 import { magicNumbers } from "../internal/policies/magic-numbers";
 import { namedExports } from "../internal/policies/named-exports";
-import { recommended } from "../internal/recommended";
-import { vitestCfg } from "../internal/policies/vitest";
-import { jsdocCfg } from "../internal/policies/jsdoc";
 import { tsCfg } from "../internal/policies/typescript";
+import { vitestCfg } from "../internal/policies/vitest";
+import { recommended } from "../internal/recommended";
 
 const settings = {
   maxStatements: 20,

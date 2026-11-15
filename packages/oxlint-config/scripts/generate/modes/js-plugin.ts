@@ -1,4 +1,5 @@
 import type { PluginSpec } from "../plugins/types.ts";
+
 import { collectRules } from "../rules/collect-rules.ts";
 
 /**

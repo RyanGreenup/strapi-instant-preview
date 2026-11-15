@@ -1,17 +1,36 @@
 {
-  "name": "@rs/strapi-instant-preview",
+  "name": "@rs/strapi-plugins",
+  "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
+    "check": "pnpm run check:scripts && pnpm run check:lockfile && pnpm run deps:lint && turbo run build lint check-types test test:e2e && pnpm run deps:cruise",
+    "check:lockfile": "pnpm install --lockfile-only --frozen-lockfile --ignore-scripts",
+    "check:scripts": "node scripts/check-scripts.mjs",
+    "check-types": "turbo run check-types",
+    "deps:cruise": "node scripts/depcruise.mjs",
+    "deps:fix": "syncpack fix",
+    "deps:lint": "syncpack lint",
     "dev": "turbo run dev",
+    "fix": "turbo run fix format",
+    "format": "turbo run format",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "prepare": "if git rev-parse --git-dir >/dev/null 2>&1; then lefthook install; fi",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e"
   },
   "devDependencies": {
-    "prettier": "3.9.6",
-    "turbo": "^2.11.11",
-    "typescript": "7.0.2"
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "dependency-cruiser": "catalog:",
+    "lefthook": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "syncpack": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:typescript-api"
   },
   "engines": {
     "node": ">=24"

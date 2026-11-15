@@ -1,17 +1,46 @@
 {
-  "$schema": "https://turborepo.dev/schema.json",
+  "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "tasks": {
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
+      "outputs": ["dist/**"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["transit", "^build"]
+    },
+    "format": {
+      "cache": false
+    },
+    "lint": {
+      "dependsOn": ["transit", "^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.gitignore"]
+    },
+    "fix": {
+      "dependsOn": ["^build", "^fix"],
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["^transit", "^build"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^transit", "^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"]
+    },
+    "release": {
+      "cache": false
+    },
+    "prepublishOnly": {
+      "dependsOn": ["build"],
+      "cache": false
     },
     "dev": {
       "cache": false,

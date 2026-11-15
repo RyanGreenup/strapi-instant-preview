@@ -3,13 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+
+import type { Logger } from "../../scripts/generate/logger.ts";
+import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
+
 import { exitCodeFor } from "../../scripts/generate/cli.ts";
 import { generateAll } from "../../scripts/generate/generate/generate-all.ts";
 import { generatePlugin } from "../../scripts/generate/generate/generate-plugin.ts";
 import { parseJson } from "../../scripts/generate/guards.ts";
 import { writeJson } from "../../scripts/generate/io/write-json.ts";
-import type { Logger } from "../../scripts/generate/logger.ts";
-import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
 
 const temporaryDirectories: string[] = [];
 const fixtureSpecifier = pathToFileURL(

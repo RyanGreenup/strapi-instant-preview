@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
+
 import { isRecord, isUnknownArray, parseJson } from "./generate/guards.ts";
 
 interface PackageManifest {

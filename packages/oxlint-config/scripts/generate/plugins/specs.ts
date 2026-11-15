@@ -1,5 +1,6 @@
-import { isRecord, isUnknownArray } from "../guards.ts";
 import type { PluginModule, PluginSpec } from "./types.ts";
+
+import { isRecord, isUnknownArray } from "../guards.ts";
 
 interface PluginConfigContainer {
   readonly configs: Record<string, unknown>;

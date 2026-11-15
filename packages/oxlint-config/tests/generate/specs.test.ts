@@ -2,10 +2,12 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+
+import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
+
 import { generatePlugin } from "../../scripts/generate/generate/generate-plugin.ts";
 import { isRecord, parseJson } from "../../scripts/generate/guards.ts";
 import { pluginSpecs } from "../../scripts/generate/plugins/specs.ts";
-import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
 
 const temporaryDirectories: string[] = [];
 

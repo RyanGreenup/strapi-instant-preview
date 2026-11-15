@@ -1,6 +1,7 @@
+import type { GenerationMode, PluginSpec } from "../plugins/types.ts";
+
 import { createJsPluginConfig } from "./js-plugin.ts";
 import { migrateConfig } from "./migrate.ts";
-import type { GenerationMode, PluginSpec } from "../plugins/types.ts";
 
 type ModeHandler = (spec: PluginSpec, config: unknown) => Promise<unknown>;
 

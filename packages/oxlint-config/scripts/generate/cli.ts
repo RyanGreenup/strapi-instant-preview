@@ -1,8 +1,10 @@
 import { defineCommand } from "citty";
+
+import type { GenerationResult } from "./plugins/types.ts";
+
 import { generateAll } from "./generate/generate-all.ts";
 import { consoleLogger } from "./logger.ts";
 import { pluginSpecs } from "./plugins/specs.ts";
-import type { GenerationResult } from "./plugins/types.ts";
 
 /** Return exit code 1 when any result failed, otherwise `undefined`. */
 export function exitCodeFor(

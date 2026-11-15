@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+
+import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
+
 import { createJsPluginConfig } from "../../scripts/generate/modes/js-plugin.ts";
 import { migrateConfig } from "../../scripts/generate/modes/migrate.ts";
-import type { PluginSpec } from "../../scripts/generate/plugins/types.ts";
 
 const jsPluginSpec: PluginSpec = {
   name: "fixture",

@@ -1,7 +1,9 @@
+import type { Context, ESTree, VisitorWithHooks } from "@oxlint/plugins";
+
 // oxlint-disable import/no-default-export
 // Default export required for plugins
 import { eslintCompatPlugin } from "@oxlint/plugins";
-import type { Context, ESTree, VisitorWithHooks } from "@oxlint/plugins";
+
 import { isInitializedByForLoop } from "./is-initialized-by-for-loop.ts";
 
 const ruleName = {

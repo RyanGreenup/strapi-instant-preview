@@ -1,12 +1,14 @@
 import { resolve } from "node:path";
-import { importPlugin } from "../io/import-plugin.ts";
-import { writeJson } from "../io/write-json.ts";
-import { modeHandlers } from "../modes/index.ts";
+
 import type {
   GenerationResult,
   PluginModule,
   PluginSpec,
 } from "../plugins/types.ts";
+
+import { importPlugin } from "../io/import-plugin.ts";
+import { writeJson } from "../io/write-json.ts";
+import { modeHandlers } from "../modes/index.ts";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error
@@ -29,7 +31,8 @@ function countRules(output: unknown): number {
 }
 
 type ImportOutcome =
-  { readonly module: PluginModule } | { readonly error: unknown };
+  | { readonly module: PluginModule }
+  | { readonly error: unknown };
 
 async function tryImportPlugin(specifier: string): Promise<ImportOutcome> {
   try {

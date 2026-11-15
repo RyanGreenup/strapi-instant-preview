@@ -1,7 +1,9 @@
 import { resolve } from "node:path";
-import { consoleLogger } from "../logger.ts";
+
 import type { Logger } from "../logger.ts";
 import type { GenerationResult, PluginSpec } from "../plugins/types.ts";
+
+import { consoleLogger } from "../logger.ts";
 import { generatePlugin } from "./generate-plugin.ts";
 
 interface GenerateAllOptions {

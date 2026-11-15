@@ -1,0 +1,20 @@
+min_version: 2.1.14
+no_tty: true
+glob_matcher: doublestar
+
+pre-commit:
+  piped: true
+  jobs:
+    - name: whitespace
+      run: git diff --cached --check
+    - name: formatting
+      glob: "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,yml,yaml,md,mdx,css,scss,html}"
+      run:
+        pnpm exec oxfmt -c packages/oxlint-config/oxfmt.json --write
+        {staged_files}
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: workspace-checks
+      run: pnpm run check
