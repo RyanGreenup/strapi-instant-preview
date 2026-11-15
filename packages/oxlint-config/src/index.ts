@@ -1,0 +1,9 @@
+export { base } from "./presets/base";
+export { cliCfg } from "./presets/cli";
+export { electron } from "./presets/electron";
+export { playwright } from "./presets/playwright";
+export { react } from "./presets/react";
+export { solid } from "./presets/solid";
+export { tanstackRouter } from "./presets/tanstack-router";
+export { vite } from "./presets/vite";
+export { vanillaExtractSolid } from "./presets/vanilla-extract-solid";

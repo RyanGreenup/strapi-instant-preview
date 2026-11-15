@@ -1,0 +1,89 @@
+{
+  "name": "@rs/oxlint-config",
+  "version": "0.0.0",
+  "description": "Oxlint Configuration",
+  "license": "MIT",
+  "author": "Ryan Greenup <ryanxgreenup@gmail.com>",
+  "files": [
+    "dist",
+    "oxfmt.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./plugins/solid": {
+      "default": "./dist/plugins/solid.mjs",
+      "types": "./dist/plugins/solid.d.mts"
+    },
+    "./plugins/solid-ref-pattern": {
+      "default": "./dist/plugins/solid-ref-pattern.mjs",
+      "types": "./dist/plugins/solid-ref-pattern.d.mts"
+    },
+    "./plugins/sonarjs": {
+      "default": "./dist/plugins/sonarjs.mjs",
+      "types": "./dist/plugins/sonarjs.d.mts"
+    },
+    "./package.json": "./package.json",
+    "./oxfmt.json": "./oxfmt.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "format": "oxfmt --write .",
+    "build": "tsdown",
+    "check-types": "tsgo --noEmit",
+    "dev": "tsdown --watch",
+    "generate-artifacts": "node scripts/generate/index.ts generate --out-dir src/generated/recommended",
+    "lint": "oxlint --type-aware --type-check . && oxfmt --check .",
+    "fix": "oxlint --fix .; oxfmt .",
+    "test": "vitest run",
+    "test:package": "pnpm run generate-artifacts && pnpm run build && node scripts/check-package.ts",
+    "release": "bumpp",
+    "prepublishOnly": "pnpm run generate-artifacts && pnpm run build"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "catalog:",
+    "eslint-plugin-jsdoc": "catalog:",
+    "eslint-plugin-solid": "catalog:",
+    "eslint-plugin-sonarjs": "catalog:"
+  },
+  "devDependencies": {
+    "@bomb.sh/tab": "catalog:",
+    "@eslint/js": "catalog:",
+    "@oxlint/migrate": "catalog:",
+    "@rs/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "@vitest/eslint-plugin": "catalog:",
+    "ajv": "catalog:",
+    "bumpp": "catalog:",
+    "citty": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-import": "catalog:",
+    "eslint-plugin-jest": "catalog:",
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "eslint-plugin-n": "catalog:",
+    "eslint-plugin-promise": "catalog:",
+    "eslint-plugin-unicorn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "oxlint": "^1.89.0",
+    "oxlint-tsgolint": ">=7.0.2004"
+  },
+  "peerDependenciesMeta": {
+    "oxlint-tsgolint": {
+      "optional": true
+    }
+  }
+}

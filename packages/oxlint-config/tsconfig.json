@@ -1,0 +1,12 @@
+{
+  "extends": "@rs/typescript-config/node-app.json",
+  "compilerOptions": {
+    // The generator scripts run directly under Node and import sibling `.ts` files.
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2023"],
+    // Most of this package is internal policy data and generator scripts that
+    // publish no declarations, so inferred exports are fine here.
+    "isolatedDeclarations": false
+  },
+  "include": ["src", "scripts", "tests"]
+}

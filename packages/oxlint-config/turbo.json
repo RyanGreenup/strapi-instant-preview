@@ -1,0 +1,49 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts"],
+      // tsdown's declaration generator loads the whole tsconfig project.
+      "inputs": [
+        "src/**",
+        "scripts/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "tsdown.config.ts"
+      ]
+    },
+    "check-types": {
+      "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts"],
+      // "package.json" is already in $TURBO_DEFAULT$; one positive glob keeps
+      // .gitignore applied when there is no .git (turbo prune, Docker).
+      "inputs": ["$TURBO_DEFAULT$", "package.json", "!src/generated/recommended/**", "!README.md"]
+    },
+    "generate-artifacts": {
+      "cache": true,
+      // The generated JSON is gitignored; this task is its only owner and every
+      // reader depends on it.
+      "inputs": ["scripts/generate/**", "package.json"],
+      "outputs": ["src/generated/recommended/**"]
+    },
+    "fix": {
+      // The self-imported Oxlint config needs dist/, and oxfmt also visits
+      // generated JSON. Build waits for generate-artifacts.
+      "dependsOn": ["$TURBO_EXTENDS$", "build"]
+    },
+    "lint": {
+      // Self-referential: oxlint.config.ts loads the base config and JS
+      // plugins from this package's dist/, so lint must wait for build.
+      "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts", "build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.gitignore", "!src/generated/recommended/**"]
+    },
+    "test": {
+      "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts"],
+      // Tests read the generated JSON through the generate-artifacts
+      // dependency. "package.json" keeps .gitignore applied when there is no
+      // .git (see check-types).
+      "inputs": ["$TURBO_DEFAULT$", "package.json", "!README.md"]
+    }
+  }
+}
