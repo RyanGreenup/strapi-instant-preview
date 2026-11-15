@@ -7,7 +7,56 @@
       "shareImage": null
     },
     "siteDescription": "A Blog made with Strapi",
-    "favicon": null
+    "favicon": null,
+    "header": {
+      "siteTitle": "Strapi Blog",
+      "homeLink": {
+        "label": "Strapi Blog",
+        "href": "/",
+        "newTab": false
+      },
+      "navigation": [
+        {
+          "label": "Home",
+          "href": "/",
+          "newTab": false
+        },
+        {
+          "label": "Blog",
+          "href": "/blog",
+          "newTab": false
+        },
+        {
+          "label": "About",
+          "href": "/about",
+          "newTab": false
+        }
+      ]
+    },
+    "footer": {
+      "copyrightOwner": "Strapi Blog",
+      "rightsNotice": "All rights reserved."
+    },
+    "socialLinks": [
+      {
+        "platform": "mastodon",
+        "label": "Follow us on Mastodon",
+        "href": "https://mastodon.social/@strapi",
+        "newTab": true
+      },
+      {
+        "platform": "twitter",
+        "label": "Follow us on Twitter",
+        "href": "https://twitter.com/strapijs",
+        "newTab": true
+      },
+      {
+        "platform": "github",
+        "label": "Go to the GitHub repo",
+        "href": "https://github.com/strapi/strapi",
+        "newTab": true
+      }
+    ]
   },
   "about": {
     "title": "About the strapi blog",
@@ -25,7 +74,16 @@
         "__component": "shared.media",
         "file": "coffee-art.jpg"
       }
-    ]
+    ],
+    "hero": {
+      "title": "About the strapi blog",
+      "description": "Who we are and what we write about.",
+      "image": "beautiful-picture.jpg"
+    },
+    "seo": {
+      "metaTitle": "About",
+      "metaDescription": "Who we are and what we write about."
+    }
   },
   "categories": [
     {
@@ -95,7 +153,8 @@
           "__component": "shared.slider",
           "files": ["coffee-art.jpg", "coffee-beans.jpg"]
         }
-      ]
+      ],
+      "publicationDate": "2024-01-15"
     },
     {
       "title": "This shrimp is awesome",
@@ -130,7 +189,8 @@
           "__component": "shared.slider",
           "files": ["coffee-art.jpg", "coffee-beans.jpg"]
         }
-      ]
+      ],
+      "publicationDate": "2024-02-15"
     },
     {
       "title": "A bug is becoming a meme on the internet",
@@ -165,7 +225,8 @@
           "__component": "shared.slider",
           "files": ["coffee-art.jpg", "coffee-beans.jpg"]
         }
-      ]
+      ],
+      "publicationDate": "2024-03-15"
     },
     {
       "title": "Beautiful picture",
@@ -200,7 +261,8 @@
           "__component": "shared.slider",
           "files": ["coffee-art.jpg", "coffee-beans.jpg"]
         }
-      ]
+      ],
+      "publicationDate": "2024-04-15"
     },
     {
       "title": "What's inside a Black Hole",
@@ -235,7 +297,43 @@
           "__component": "shared.slider",
           "files": ["coffee-art.jpg", "coffee-beans.jpg"]
         }
-      ]
+      ],
+      "publicationDate": "2024-05-15"
     }
-  ]
+  ],
+  "home": {
+    "hero": {
+      "title": "Welcome to the Strapi Blog",
+      "description": "Stories about tech, food, nature and more."
+    },
+    "blocks": [
+      {
+        "__component": "shared.rich-text",
+        "body": "This site is an [Astro](https://astro.build/) front end for a Strapi blog. Edit any page in the Strapi admin to see it here."
+      },
+      {
+        "__component": "sections.article-grid",
+        "title": "Latest articles",
+        "featuredFirst": true,
+        "articles": "latest"
+      }
+    ],
+    "seo": {
+      "metaTitle": "Strapi Blog",
+      "metaDescription": "A blog made with Strapi"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "description": "Every article, newest first.",
+    "articleGrid": {
+      "title": "All articles",
+      "featuredFirst": true,
+      "articles": "all"
+    },
+    "seo": {
+      "metaTitle": "Blog",
+      "metaDescription": "Every article on the Strapi Blog."
+    }
+  }
 }

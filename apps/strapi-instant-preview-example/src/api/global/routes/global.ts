@@ -1,7 +1,9 @@
-/**
- * global router.
- */
-
 import { factories } from "@strapi/strapi";
 
-export default factories.createCoreRouter("api::global.global");
+import { populate, withPopulate } from "../../../populate";
+
+export default factories.createCoreRouter("api::global.global", {
+  config: {
+    find: withPopulate(populate.global),
+  },
+});

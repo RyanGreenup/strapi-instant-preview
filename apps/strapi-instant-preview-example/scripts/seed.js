@@ -9,6 +9,8 @@ const {
   articles,
   global,
   about,
+  home,
+  blog,
 } = require("../data/data.json");
 
 async function seedExampleApp() {
@@ -39,33 +41,6 @@ async function isFirstRun() {
   const initHasRun = await pluginStore.get({ key: "initHasRun" });
   await pluginStore.set({ key: "initHasRun", value: true });
   return !initHasRun;
-}
-
-async function setPublicPermissions(newPermissions) {
-  // Find the ID of the public role
-  const publicRole = await strapi.db
-    .query("plugin::users-permissions.role")
-    .findOne({
-      where: {
-        type: "public",
-      },
-    });
-
-  // Create the new permissions and link them to the public role
-  const allPermissionsToCreate = [];
-  Object.keys(newPermissions).map((controller) => {
-    const actions = newPermissions[controller];
-    const permissionsToCreate = actions.map((action) => {
-      return strapi.db.query("plugin::users-permissions.permission").create({
-        data: {
-          action: `api::${controller}.${controller}.${action}`,
-          role: publicRole.id,
-        },
-      });
-    });
-    allPermissionsToCreate.push(...permissionsToCreate);
-  });
-  await Promise.all(allPermissionsToCreate);
 }
 
 function getFileSizeInBytes(filePath) {
@@ -111,6 +86,7 @@ async function createEntry({ model, entry }) {
     // Actually create the entry in Strapi
     await strapi.documents(`api::${model}.${model}`).create({
       data: entry,
+      status: "published",
     });
   } catch (error) {
     console.error({ model, entry, error });
@@ -214,14 +190,54 @@ async function importGlobal() {
 
 async function importAbout() {
   const updatedBlocks = await updateBlocks(about.blocks);
+  const image = await checkFileExistsBeforeUpload([about.hero.image]);
 
   await createEntry({
     model: "about",
     entry: {
       ...about,
+      hero: { ...about.hero, image },
       blocks: updatedBlocks,
       // Make sure it's not a draft
       publishedAt: Date.now(),
+    },
+  });
+}
+
+// Resolve an article grid's `articles` placeholder to article document IDs:
+// "latest" takes the three newest, "all" takes every article.
+async function resolveArticleGrid(grid) {
+  const found = await strapi.documents("api::article.article").findMany({
+    status: "published",
+    sort: { publicationDate: "desc" },
+    fields: ["documentId"],
+  });
+  const ids = found.map((article) => article.documentId);
+  return {
+    ...grid,
+    articles: grid.articles === "latest" ? ids.slice(0, 3) : ids,
+  };
+}
+
+async function importHome() {
+  const blocks = [];
+  for (const block of await updateBlocks(home.blocks)) {
+    blocks.push(
+      block.__component === "sections.article-grid"
+        ? { ...block, ...(await resolveArticleGrid(block)) }
+        : block,
+    );
+  }
+
+  await createEntry({ model: "home", entry: { ...home, blocks } });
+}
+
+async function importBlog() {
+  await createEntry({
+    model: "blog",
+    entry: {
+      ...blog,
+      articleGrid: await resolveArticleGrid(blog.articleGrid),
     },
   });
 }
@@ -247,21 +263,17 @@ async function importAuthors() {
 }
 
 async function importSeedData() {
-  // Allow read of application content types
-  await setPublicPermissions({
-    article: ["find", "findOne"],
-    category: ["find", "findOne"],
-    author: ["find", "findOne"],
-    global: ["find", "findOne"],
-    about: ["find", "findOne"],
-  });
+  // Public read access is granted by the bootstrap in src/index.ts.
 
-  // Create all entries
+  // Create all entries. Articles come before home and blog, whose article
+  // grids link to them.
   await importCategories();
   await importAuthors();
   await importArticles();
   await importGlobal();
   await importAbout();
+  await importHome();
+  await importBlog();
 }
 
 async function main() {

@@ -1,3 +1,9 @@
 import { factories } from "@strapi/strapi";
 
-export default factories.createCoreRouter("api::blog.blog");
+import { populate, withPopulate } from "../../../populate";
+
+export default factories.createCoreRouter("api::blog.blog", {
+  config: {
+    find: withPopulate(populate.blog),
+  },
+});
