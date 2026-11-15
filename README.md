@@ -3,6 +3,8 @@
 Strapi plugin for instant preview during editing. Autosaves drafts and shows the
 preview panel on the side so edits can be viewed in real-time.
 
+![](./assets/desktop-screenshot-preview-panel.png)
+
 ## Usage
 
 ### Try it Locally
