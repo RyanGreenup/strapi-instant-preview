@@ -207,6 +207,9 @@ importers:
       '@ryangreenup/strapi-preview-helpers':
         specifier: workspace:*
         version: link:../../packages/preview-helpers
+      '@strapi/content-manager':
+        specifier: 5.62.0
+        version: 5.62.0(dfbf9f1e32aeeb2d930d88e33a045836)
       '@strapi/database':
         specifier: 5.62.0
         version: 5.62.0(better-sqlite3@12.11.1)(supports-color@10.2.2)(ts-toolbelt@9.6.0)

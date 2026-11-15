@@ -21,6 +21,7 @@
     "@ryangreenup/strapi-draft-autosave": "workspace:*",
     "@ryangreenup/strapi-instant-preview": "workspace:*",
     "@ryangreenup/strapi-preview-helpers": "workspace:*",
+    "@strapi/content-manager": "5.62.0",
     "@strapi/database": "5.62.0",
     "@strapi/plugin-cloud": "5.62.0",
     "@strapi/plugin-users-permissions": "5.62.0",
