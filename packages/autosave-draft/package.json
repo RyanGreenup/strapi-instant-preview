@@ -1,6 +1,6 @@
 {
   "name": "@ryangreenup/strapi-draft-autosave",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Autosave Strapi drafts with a per-tab revert snapshot",
   "keywords": [],
   "license": "MIT",
