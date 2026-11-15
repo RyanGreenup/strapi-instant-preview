@@ -26,6 +26,12 @@ const deniedTypes = [
 const config = ({
   env,
 }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
+  "admin-seed": {
+    enabled: true,
+    config: {
+      mode: env("STRAPI_ADMIN_SEED_MODE", "once"),
+    },
+  },
   "users-permissions": {
     config: {
       jwtManagement: "refresh",

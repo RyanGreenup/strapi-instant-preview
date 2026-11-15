@@ -4,6 +4,48 @@ Strapi comes with a full featured
 [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets
 you scaffold and manage your project in seconds.
 
+## Seeded local admin and API token
+
+The app uses the workspace `strapi-admin-seed-plugin`. Its seed service runs
+from the app bootstrap, after Strapi creates the admin roles.
+
+Run from the repository root:
+
+```sh
+pnpm --dir packages/strapi-admin-seed-plugin build
+mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
+```
+
+`mise.toml` loads the [SOPS]-encrypted [^@78c5bb5] root `.env.yaml`. Decryption
+requires access to the [age] [^@6a84079] key configured in `.sops.yaml`, on a
+fresh clone create a fresh `.env.yaml`. Manage credentials with [SOPS], not the
+app's plaintext `.env`:
+
+[^@6a84079]:
+    GitHub - FiloSottile/age: A simple, modern and secure encryption tool (and
+    Go library) with small explicit keys, no config options, and UNIX-style
+    composability. (n.d.). GitHub. Retrieved November 15, 2026, from
+    https://github.com/filosottile/age
+
+[age]: https://github.com/filosottile/age
+
+[^@78c5bb5]:
+    GitHub - getsops/sops: Simple and flexible tool for managing secrets.
+    (n.d.). GitHub. Retrieved November 15, 2026, from
+    https://github.com/getsops/sops
+
+[SOPS]: https://github.com/getsops/sops
+
+```sh
+mise exec -- sops edit .env.yaml
+```
+
+The default `once` mode creates the first Super Admin only when no admin exists
+and records a database marker and wont reset an existing admin's password. The
+`admin-seed` read-only content API token is reconciled with its encrypted
+environment value on every boot. `STRAPI_ADMIN_SEED_MODE=always` also reconciles
+the admin on every boot; use it only when that behavior is intended.
+
 ### `develop`
 
 Start your Strapi application with autoReload enabled.

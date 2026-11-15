@@ -36,3 +36,8 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+apps/strapi-instant-preview-example/.strapi
+apps/strapi-instant-preview-example/.strapi-updater.json
+apps/strapi-instant-preview-example/.tmp/data.db
+.codemap
+.serena
