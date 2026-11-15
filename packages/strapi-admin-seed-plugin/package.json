@@ -1,0 +1,43 @@
+{
+  "name": "@moworks/strapi-admin-seed-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Seeds a Strapi super admin and an API token from environment variables",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-server": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsgo --skipLibCheck --noEmit",
+    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@moworks/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@moworks/oxlint-config/oxfmt.json --write .",
+    "fix": "oxlint --fix --fix-suggestions --type-aware --type-check .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@moworks/oxlint-config": "workspace:*",
+    "@moworks/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "admin-seed",
+    "displayName": "admin-seed",
+    "description": "Seeds a Strapi super admin and an API token from environment variables"
+  }
+}

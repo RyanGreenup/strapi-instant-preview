@@ -1,0 +1,10 @@
+{
+  "extends": "@moworks/typescript-config/base.json",
+  "compilerOptions": {
+    // The content types are inferred from the zod schemas, so each export
+    // cannot have an explicit type annotation.
+    "isolatedDeclarations": false,
+    "types": ["node"]
+  },
+  "include": ["src", "tests"]
+}
