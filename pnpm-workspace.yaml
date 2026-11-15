@@ -2,6 +2,13 @@ packages:
   - "apps/*"
   - "packages/*"
 
+allowBuilds:
+  "@swc/core": true
+  better-sqlite3: true
+  core-js-pure: true
+  esbuild: true
+  lefthook: true
+
 catalog:
   "@bomb.sh/tab": 0.0.22
   "@eslint/js": 10.0.1
