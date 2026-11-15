@@ -6,6 +6,7 @@
  */
 
 import type { RefCallback } from "react";
+
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 const DURATION_MS = 250;
@@ -13,7 +14,8 @@ const reducedMotion = (): boolean =>
   globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Find the admin root whose inline width reserves space for the dock. */
-const getAdminRoot = (): HTMLElement | null => document.querySelector("#strapi");
+const getAdminRoot = (): HTMLElement | null =>
+  document.querySelector("#strapi");
 
 interface SlideOptions {
   from: Keyframe;
@@ -46,7 +48,9 @@ const slidePane = (
     .closest('[data-scope="splitter"][data-part="root"]')
     ?.querySelector('[data-part="resize-trigger"]');
   const targets = handle ? [element, handle] : [element];
-  const starts = targets.map((target) => from ?? getComputedStyle(target).transform);
+  const starts = targets.map(
+    (target) => from ?? getComputedStyle(target).transform,
+  );
   for (const animation of animations.pane) {
     animation.cancel();
   }
@@ -97,7 +101,9 @@ const useExitState = (
 
   if (previous.isOpen !== isOpen || previous.isDesktop !== isDesktop) {
     setPrevious({ isOpen, isDesktop });
-    setIsExiting(previous.isOpen && !isOpen && previous.isDesktop === isDesktop);
+    setIsExiting(
+      previous.isOpen && !isOpen && previous.isDesktop === isDesktop,
+    );
   }
 
   return {
@@ -138,7 +144,10 @@ const openDock = (state: AnimationState, isOverlay: boolean): void => {
   }
 };
 
-const closeDock = async (state: AnimationState, isOverlay: boolean): Promise<void> => {
+const closeDock = async (
+  state: AnimationState,
+  isOverlay: boolean,
+): Promise<void> => {
   if (reducedMotion()) {
     state.exitDone();
     return;
@@ -160,14 +169,20 @@ const closeDock = async (state: AnimationState, isOverlay: boolean): Promise<voi
   state.exitDone();
 };
 
-const synchronizeStart = async (animation: Animation, lead: Animation): Promise<void> => {
+const synchronizeStart = async (
+  animation: Animation,
+  lead: Animation,
+): Promise<void> => {
   await lead.ready;
   if (animation.playState === "running") {
     animation.startTime = lead.startTime;
   }
 };
 
-const mountPane = (state: AnimationState, element: HTMLDivElement | null): void => {
+const mountPane = (
+  state: AnimationState,
+  element: HTMLDivElement | null,
+): void => {
   // Ark composes a new ref on each render; do not restart an existing pane.
   if (!element || element === state.node) {
     return;
@@ -184,6 +199,7 @@ const mountPane = (state: AnimationState, element: HTMLDivElement | null): void 
   // The portal mounts a frame later. Share the editor's start time.
   for (const animation of animations) {
     if (lead?.playState === "running") {
+      // oxlint-disable-next-line promise/prefer-await-to-then -- An effect cannot await, and no-void forbids `void`.
       synchronizeStart(animation, lead).catch(() => {
         // A cancelled lead no longer needs synchronization.
       });
@@ -229,6 +245,7 @@ const useDockAnimation = ({
 
   useLayoutEffect(() => {
     if (isExiting) {
+      // oxlint-disable-next-line promise/prefer-await-to-then -- An effect cannot await, and no-void forbids `void`.
       closeDock(state, isOverlay).catch(() => {
         // Reopening cancels the exit animations.
       });

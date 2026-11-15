@@ -109,7 +109,9 @@ const PanelReflow = (): JSX.Element => {
   useLayoutEffect(() => {
     const layout = findEditLayout(anchor.current);
     if (layout === undefined) {
-      warnOnce("the edit view grid was not recognised; side panels stay beside the form");
+      warnOnce(
+        "the edit view grid was not recognised; side panels stay beside the form",
+      );
     }
     return layout && reflowWhenNarrow(layout);
   }, []);

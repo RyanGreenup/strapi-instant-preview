@@ -95,6 +95,7 @@ const usePreviewUrl = (
                 setUrl(state.url);
               }
             };
+            // oxlint-disable-next-line promise/prefer-await-to-then -- An effect cannot await, and no-void forbids `void`.
             refreshUrl().catch(() => {
               if (!isStale) {
                 stateRef.current = afterFailure(stateRef.current, owner);
