@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    // Bundler resolution matches tsdown; published output must still work in Node.
+    "moduleResolution": "Bundler",
+    // Require explicit type-only imports and syntax compatible with type stripping.
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "isolatedModules": true,
+    // Explicit export types let tsdown generate declarations independently.
+    "isolatedDeclarations": true,
+    "declaration": true,
+    "declarationMap": true,
+    // tsgo type-checks; the build tool emits JavaScript and declarations.
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src"]
+}

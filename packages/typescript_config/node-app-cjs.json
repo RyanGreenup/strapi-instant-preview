@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    // NodeNext selects CommonJS or ESM using package.json type and .cts/.mts extensions.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    // Permit regular import syntax in CommonJS files.
+    "verbatimModuleSyntax": false,
+    "lib": ["ES2022"],
+    "types": ["node"]
+  }
+}
