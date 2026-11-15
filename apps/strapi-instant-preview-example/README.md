@@ -59,6 +59,24 @@ Set `DRAFT_AUTOSAVE_DEBOUNCE_MS` to change the delay (minimum 100 milliseconds),
 then restart Strapi. Publishing clears the per-tab revert snapshot. Autosave
 never publishes content.
 
+## Web content components
+
+The content model maps the UI in [`apps/web`](../web/) to editable components.
+
+| Web candidate                                               | Strapi model                                                                              | Where to edit                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Site header and navigation                                  | `layout.header`, repeatable `shared.link`                                                 | Global -> header                                        |
+| Header/footer social links                                  | Repeatable `shared.social-link` with platform, accessible label, URL, and new-tab setting | Global -> socialLinks                                   |
+| Footer copyright                                            | `layout.footer`; the frontend computes the current year                                   | Global -> footer                                        |
+| Page metadata and sharing image                             | Existing `shared.seo`, extended with optional canonical URL                               | Global -> defaultSeo; Home, Blog, About, Article -> seo |
+| Home introduction and About hero                            | `shared.hero` with title, description, image, and optional dates                          | Home / About -> hero                                    |
+| Blog grid and article cards                                 | `sections.article-grid` with ordered article relations and featured-first presentation    | Blog -> articleGrid; Home -> blocks                     |
+| Article title, image, and dates                             | Existing Article title/description/cover plus publicationDate and updatedDate             | Article                                                 |
+| Prose, headings, lists, tables, code, and inline formatting | Existing Markdown `shared.rich-text`                                                      | Home / About / Article -> blocks                        |
+| Images and other media                                      | Existing `shared.media`; image collections use existing `shared.slider`                   | Home / About / Article -> blocks                        |
+| Blockquotes                                                 | Existing `shared.quote`                                                                   | Home / About / Article -> blocks                        |
+| Embedded MDX link                                           | `shared.link`; arbitrary JavaScript handlers are not CMS content                          | Home / About / Article -> blocks                        |
+
 ### `develop`
 
 Start your Strapi application with autoReload enabled.

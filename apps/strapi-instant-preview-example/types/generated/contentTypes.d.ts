@@ -493,15 +493,23 @@ export interface ApiAboutAbout extends Struct.SingleTypeSchema {
   };
   attributes: {
     blocks: Schema.Attribute.DynamicZone<
-      ["shared.media", "shared.quote", "shared.rich-text", "shared.slider"]
+      [
+        "shared.media",
+        "shared.quote",
+        "shared.rich-text",
+        "shared.slider",
+        "shared.link",
+      ]
     >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
+    hero: Schema.Attribute.Component<"shared.hero", false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<"oneToMany", "api::about.about"> &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    seo: Schema.Attribute.Component<"shared.seo", false>;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
@@ -523,7 +531,13 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
   attributes: {
     author: Schema.Attribute.Relation<"manyToOne", "api::author.author">;
     blocks: Schema.Attribute.DynamicZone<
-      ["shared.media", "shared.quote", "shared.rich-text", "shared.slider"]
+      [
+        "shared.media",
+        "shared.quote",
+        "shared.rich-text",
+        "shared.slider",
+        "shared.link",
+      ]
     >;
     category: Schema.Attribute.Relation<"manyToOne", "api::category.category">;
     cover: Schema.Attribute.Media<"images" | "files" | "videos">;
@@ -540,12 +554,15 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
       "api::article.article"
     > &
       Schema.Attribute.Private;
+    publicationDate: Schema.Attribute.Date;
     publishedAt: Schema.Attribute.DateTime;
+    seo: Schema.Attribute.Component<"shared.seo", false>;
     slug: Schema.Attribute.UID<"title">;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
+    updatedDate: Schema.Attribute.Date;
   };
 }
 
@@ -575,6 +592,34 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiBlogBlog extends Struct.SingleTypeSchema {
+  collectionName: "blogs";
+  info: {
+    displayName: "Blog";
+    pluralName: "blogs";
+    singularName: "blog";
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    articleGrid: Schema.Attribute.Component<"sections.article-grid", false>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::blog.blog"> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    seo: Schema.Attribute.Component<"shared.seo", false>;
+    title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
@@ -630,6 +675,8 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
       Schema.Attribute.Private;
     defaultSeo: Schema.Attribute.Component<"shared.seo", false>;
     favicon: Schema.Attribute.Media<"images" | "files" | "videos">;
+    footer: Schema.Attribute.Component<"layout.footer", false>;
+    header: Schema.Attribute.Component<"layout.header", false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       "oneToMany",
@@ -639,6 +686,43 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     siteDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     siteName: Schema.Attribute.String & Schema.Attribute.Required;
+    socialLinks: Schema.Attribute.Component<"shared.social-link", true>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiHomeHome extends Struct.SingleTypeSchema {
+  collectionName: "homes";
+  info: {
+    displayName: "Home";
+    pluralName: "homes";
+    singularName: "home";
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        "shared.media",
+        "shared.quote",
+        "shared.rich-text",
+        "shared.slider",
+        "shared.link",
+        "sections.article-grid",
+      ]
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+    hero: Schema.Attribute.Component<"shared.hero", false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<"oneToMany", "api::home.home"> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    seo: Schema.Attribute.Component<"shared.seo", false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
@@ -1183,8 +1267,10 @@ declare module "@strapi/strapi" {
       "api::about.about": ApiAboutAbout;
       "api::article.article": ApiArticleArticle;
       "api::author.author": ApiAuthorAuthor;
+      "api::blog.blog": ApiBlogBlog;
       "api::category.category": ApiCategoryCategory;
       "api::global.global": ApiGlobalGlobal;
+      "api::home.home": ApiHomeHome;
       "plugin::content-releases.release": PluginContentReleasesRelease;
       "plugin::content-releases.release-action": PluginContentReleasesReleaseAction;
       "plugin::i18n.locale": PluginI18NLocale;

@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_shared_social_links",
+  "info": {
+    "displayName": "Social link"
+  },
+  "options": {},
+  "attributes": {
+    "platform": {
+      "type": "enumeration",
+      "enum": ["mastodon", "twitter", "github"]
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "href": {
+      "type": "string",
+      "required": true
+    },
+    "newTab": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

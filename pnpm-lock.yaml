@@ -132,6 +132,9 @@ catalogs:
     vitest:
       specifier: 5.1.0
       version: 5.1.0
+    zod:
+      specifier: 4.6.7
+      version: 4.6.7
   typescript-api:
     typescript:
       specifier: 6.0.3
@@ -299,6 +302,43 @@ importers:
       styled-components:
         specifier: 'catalog:'
         version: 6.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.7(@volar/typescript@2.4.31(typescript@7.0.2))(typescript@7.0.2)
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
+
+  packages/contract:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+    devDependencies:
+      '@rs/oxlint-config':
+        specifier: workspace:*
+        version: link:../oxlint-config
+      '@rs/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript_config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260707.2
+      oxfmt:
+        specifier: 'catalog:'
+        version: 0.78.0(@astrojs/compiler-rs@0.5.3)
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.93.0(oxlint-tsgolint@7.0.2007)
+      oxlint-tsgolint:
+        specifier: 'catalog:'
+        version: 7.0.2007
       tsdown:
         specifier: 'catalog:'
         version: 0.23.7(@volar/typescript@2.4.31(typescript@7.0.2))(typescript@7.0.2)
