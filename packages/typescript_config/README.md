@@ -1,4 +1,4 @@
-# @rs/typescript-config
+# @ryangreenup/typescript-config
 
 Shared `tsconfig` presets. Extend the preset for your runtime, then override
 package-specific file paths and types.
@@ -10,7 +10,7 @@ Add the config package to the consuming package's `devDependencies`:
 ```json
 {
   "devDependencies": {
-    "@rs/typescript-config": "workspace:*"
+    "@ryangreenup/typescript-config": "workspace:*"
   }
 }
 ```
@@ -19,7 +19,7 @@ Extend it from that package's `tsconfig.json`:
 
 ```json
 {
-  "extends": "@rs/typescript-config/node-app.json",
+  "extends": "@ryangreenup/typescript-config/node-app.json",
   "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]
 }
@@ -68,7 +68,7 @@ to the app, not this config package:
 
 ```json
 {
-  "extends": "@rs/typescript-config/strapi.json",
+  "extends": "@ryangreenup/typescript-config/strapi.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist"

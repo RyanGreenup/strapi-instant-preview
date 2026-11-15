@@ -56,9 +56,9 @@ deployment's token can read drafts; it does not because `get()` asks for
 published content unless `verifyPreview` returned a document.
 
 Signing, verification, response headers, and the iframe bridge come from
-[`@rs/strapi-preview-helpers`](../../packages/preview-helpers/README.md), which
-documents the signed URL contract. This app owns the routes, the draft fetches
-in `src/lib/cms.ts`, and the router refresh in
+[`@ryangreenup/strapi-preview-helpers`](../../packages/preview-helpers/README.md),
+which documents the signed URL contract. This app owns the routes, the draft
+fetches in `src/lib/cms.ts`, and the router refresh in
 `src/components/PreviewBridge.astro`. Invalid or expired links return 403 before
 any draft is fetched; missing articles return 404. Drafts do not need a slug or
 complete optional content.

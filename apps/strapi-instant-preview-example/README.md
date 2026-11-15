@@ -52,10 +52,10 @@ the admin on every boot; use it only when that behavior is intended.
 ## Draft autosave
 
 The example enables the workspace
-[`@rs/strapi-draft-autosave`](../../packages/autosave-draft/) plugin. Open an
-existing article's Draft tab, edit a field, and pause for 1/2 a second.. The
-Autosave panel shows the saved time and offers a revert to the original draft.
-New entries require an initial save before autosave starts.
+[`@ryangreenup/strapi-draft-autosave`](../../packages/autosave-draft/) plugin.
+Open an existing article's Draft tab, edit a field, and pause for 1/2 a second..
+The Autosave panel shows the saved time and offers a revert to the original
+draft. New entries require an initial save before autosave starts.
 
 Set `DRAFT_AUTOSAVE_DEBOUNCE_MS` to change the delay (minimum 100 milliseconds),
 then restart Strapi. Publishing clears the per-tab revert snapshot. Autosave

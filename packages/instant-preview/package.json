@@ -1,5 +1,5 @@
 {
-  "name": "@rs/strapi-instant-preview",
+  "name": "@ryangreenup/strapi-instant-preview",
   "version": "0.0.1",
   "description": "Instantly preview a draft in a split by autosaving",
   "keywords": [],
@@ -25,8 +25,8 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsgo --skipLibCheck --noEmit",
-    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --check .",
-    "format": "oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --write .",
+    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .",
     "fix": "oxlint --fix --fix-suggestions --type-aware --type-check .",
     "test": "vitest run --passWithNoTests"
   },
@@ -34,8 +34,8 @@
     "@ark-ui/react": "catalog:"
   },
   "devDependencies": {
-    "@rs/oxlint-config": "workspace:*",
-    "@rs/typescript-config": "workspace:*",
+    "@ryangreenup/oxlint-config": "workspace:*",
+    "@ryangreenup/typescript-config": "workspace:*",
     "@strapi/design-system": "catalog:",
     "@strapi/icons": "catalog:",
     "@strapi/strapi": "catalog:",

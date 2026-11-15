@@ -10,7 +10,7 @@ Requires Strapi 5.62 or later.
 Install the plugin in the Strapi app:
 
 ```sh
-npm install @rs/strapi-instant-preview
+npm install @ryangreenup/strapi-instant-preview
 ```
 
 The plugin uses the Strapi admin's own copies of React, `react-intl`,
@@ -64,7 +64,7 @@ The preview page must allow framing by the admin origin (for example, a
 `Content-Security-Policy: frame-ancestors` header that lists the admin URL).
 
 To refresh the preview while editors type, pair this plugin with
-[`@rs/strapi-draft-autosave`](https://www.npmjs.com/package/@rs/strapi-draft-autosave).
+[`@ryangreenup/strapi-draft-autosave`](https://www.npmjs.com/package/@ryangreenup/strapi-draft-autosave).
 
 ## Strapi assumptions
 

@@ -125,7 +125,7 @@ export const pluginSpecs = [
     specifier: "eslint-plugin-sonarjs",
     mode: "jsPlugin",
     jsPluginName: "sonarjs",
-    jsPluginSpecifier: "@rs/oxlint-config/plugins/sonarjs",
+    jsPluginSpecifier: "@ryangreenup/oxlint-config/plugins/sonarjs",
     pick: (module) => pluginConfig(module).configs["recommended"],
   },
   {
@@ -133,7 +133,7 @@ export const pluginSpecs = [
     specifier: "eslint-plugin-solid/configs/recommended",
     mode: "jsPlugin",
     jsPluginName: "solid",
-    jsPluginSpecifier: "@rs/oxlint-config/plugins/solid",
+    jsPluginSpecifier: "@ryangreenup/oxlint-config/plugins/solid",
     pick: (module) => module.default,
   },
 ] as const satisfies readonly PluginSpec[];

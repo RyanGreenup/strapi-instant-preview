@@ -38,7 +38,7 @@ function setupFixtureDir(): {
   const passingFile = join(srcDir, "passing.css.ts");
   writeFileSync(
     passingFile,
-    'import { recipe } from "@vanilla-extract/recipes";\nimport { vars } from "@rs/contract";\nexport const b = recipe({ base: { color: vars.color.current } });\n',
+    'import { recipe } from "@vanilla-extract/recipes";\nimport { vars } from "@ryangreenup/contract";\nexport const b = recipe({ base: { color: vars.color.current } });\n',
   );
 
   const config = {
@@ -62,7 +62,7 @@ describe("vanillaExtractSolid oxlint preset behavioral enforcement", () => {
       });
       expect(failResult.status).toBe(1);
       expect(failResult.stdout + failResult.stderr).toContain(
-        "Component styles must use @rs/contract vars/Sprinkles or @vanilla-extract/recipes.",
+        "Component styles must use @ryangreenup/contract vars/Sprinkles or @vanilla-extract/recipes.",
       );
 
       const passResult = spawnSync(oxlintBin, ["-c", configFile, passingFile], {
@@ -71,7 +71,7 @@ describe("vanillaExtractSolid oxlint preset behavioral enforcement", () => {
       });
       expect(passResult.status).toBe(0);
       expect(passResult.stdout + passResult.stderr).not.toContain(
-        "Component styles must use @rs/contract",
+        "Component styles must use @ryangreenup/contract",
       );
     } finally {
       rmSync(testDir, { force: true, recursive: true });

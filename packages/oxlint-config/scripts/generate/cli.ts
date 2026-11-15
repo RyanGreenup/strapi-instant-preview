@@ -41,7 +41,7 @@ export const generateCommand = defineCommand({
 export const mainCommand = defineCommand({
   meta: {
     name: "oxlint-rulegen",
-    description: "Build-time utilities for @rs/oxlint-config.",
+    description: "Build-time utilities for @ryangreenup/oxlint-config.",
   },
   subCommands: {
     generate: generateCommand,

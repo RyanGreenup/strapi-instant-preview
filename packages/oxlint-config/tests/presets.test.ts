@@ -33,7 +33,7 @@ describe("public presets", () => {
     expect(solid.extends).toContain(base);
     expect(solid.jsPlugins).toContainEqual({
       name: "solid-js-custom",
-      specifier: "@rs/oxlint-config/plugins/solid-ref-pattern",
+      specifier: "@ryangreenup/oxlint-config/plugins/solid-ref-pattern",
     });
   }, 5000);
 
@@ -96,7 +96,7 @@ describe("public presets", () => {
                 name: "@vanilla-extract/css",
                 importNames: ["style"],
                 message:
-                  "Component styles must use @rs/contract vars/Sprinkles or @vanilla-extract/recipes.",
+                  "Component styles must use @ryangreenup/contract vars/Sprinkles or @vanilla-extract/recipes.",
               },
             ],
           },

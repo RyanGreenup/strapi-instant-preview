@@ -2,18 +2,18 @@
 
 Signed, expiring preview links and the preview-page iframe bridge for Strapi's
 native preview. Both are optional companions to
-[`@rs/strapi-instant-preview`](../instant-preview/README.md) and have no
-dependencies: install this package in the Strapi app for `./server`, and in the
-frontend for `./server` and `./client`. Routing, draft fetching, and rendering
-stay in your apps.
+[`@ryangreenup/strapi-instant-preview`](../instant-preview/README.md) and have
+no dependencies: install this package in the Strapi app for `./server`, and in
+the frontend for `./server` and `./client`. Routing, draft fetching, and
+rendering stay in your apps.
 
-## Signed preview links: `@rs/strapi-preview-helpers/server`
+## Signed preview links: `@ryangreenup/strapi-preview-helpers/server`
 
 In Strapi, `createPreviewConfig` returns the native `preview` configuration. You
 supply the frontend URL, a signing secret, and the route for each document:
 
 ```ts
-import { createPreviewConfig } from "@rs/strapi-preview-helpers/server";
+import { createPreviewConfig } from "@ryangreenup/strapi-preview-helpers/server";
 
 // Within the admin configuration factory in config/admin.ts:
 preview: createPreviewConfig({
@@ -44,7 +44,7 @@ own content API credentials:
 import {
   previewHeaders,
   verifyPreviewUrl,
-} from "@rs/strapi-preview-helpers/server";
+} from "@ryangreenup/strapi-preview-helpers/server";
 
 const preview = verifyPreviewUrl(request.url, process.env.PREVIEW_SECRET);
 if (!preview) return new Response("Forbidden", { status: 403 });
@@ -76,7 +76,7 @@ proxy or CDN that re-encodes the path, adds or removes a trailing slash, or
 reorders the query turns every link into a 403; one that ignores `no-store` can
 cache a draft. Test preview on the real hosting.
 
-## Preview page bridge: `@rs/strapi-preview-helpers/client`
+## Preview page bridge: `@ryangreenup/strapi-preview-helpers/client`
 
 On preview pages, render a marker carrying the Strapi admin origin and start the
 bridge once in the browser:
@@ -86,7 +86,7 @@ bridge once in the browser:
 ```
 
 ```ts
-import { startPreviewBridge } from "@rs/strapi-preview-helpers/client";
+import { startPreviewBridge } from "@ryangreenup/strapi-preview-helpers/client";
 
 startPreviewBridge({
   // Re-render through your client router; omit to reload the page.
@@ -106,7 +106,7 @@ With Astro's `ClientRouter`, refresh the path and query only, and restore the
 scroll position inside `astro:after-swap`:
 
 ```ts
-import { startPreviewBridge } from "@rs/strapi-preview-helpers/client";
+import { startPreviewBridge } from "@ryangreenup/strapi-preview-helpers/client";
 import { navigate } from "astro:transitions/client";
 
 startPreviewBridge({

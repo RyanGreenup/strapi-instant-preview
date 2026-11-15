@@ -198,13 +198,13 @@ importers:
       '@moworks/strapi-admin-seed-plugin':
         specifier: workspace:*
         version: link:../../packages/strapi-admin-seed-plugin
-      '@rs/strapi-draft-autosave':
+      '@ryangreenup/strapi-draft-autosave':
         specifier: workspace:*
         version: link:../../packages/autosave-draft
-      '@rs/strapi-instant-preview':
+      '@ryangreenup/strapi-instant-preview':
         specifier: workspace:*
         version: link:../../packages/instant-preview
-      '@rs/strapi-preview-helpers':
+      '@ryangreenup/strapi-preview-helpers':
         specifier: workspace:*
         version: link:../../packages/preview-helpers
       '@strapi/database':
@@ -271,10 +271,10 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.7.5
         version: 3.7.5
-      '@rs/contract':
+      '@ryangreenup/contract':
         specifier: workspace:*
         version: link:../../packages/contract
-      '@rs/strapi-preview-helpers':
+      '@ryangreenup/strapi-preview-helpers':
         specifier: workspace:*
         version: link:../../packages/preview-helpers
       astro:
@@ -308,10 +308,10 @@ importers:
 
   packages/autosave-draft:
     devDependencies:
-      '@rs/oxlint-config':
+      '@ryangreenup/oxlint-config':
         specifier: workspace:*
         version: link:../oxlint-config
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@strapi/content-manager':
@@ -372,10 +372,10 @@ importers:
         specifier: 'catalog:'
         version: 4.6.7
     devDependencies:
-      '@rs/oxlint-config':
+      '@ryangreenup/oxlint-config':
         specifier: workspace:*
         version: link:../oxlint-config
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@types/node':
@@ -409,10 +409,10 @@ importers:
         specifier: 'catalog:'
         version: 5.40.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@rs/oxlint-config':
+      '@ryangreenup/oxlint-config':
         specifier: workspace:*
         version: link:../oxlint-config
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@strapi/design-system':
@@ -491,7 +491,7 @@ importers:
       '@oxlint/migrate':
         specifier: 'catalog:'
         version: 1.93.0
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@types/node':
@@ -557,10 +557,10 @@ importers:
 
   packages/preview-helpers:
     devDependencies:
-      '@rs/oxlint-config':
+      '@ryangreenup/oxlint-config':
         specifier: workspace:*
         version: link:../oxlint-config
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@types/node':
@@ -590,10 +590,10 @@ importers:
 
   packages/strapi-admin-seed-plugin:
     devDependencies:
-      '@rs/oxlint-config':
+      '@ryangreenup/oxlint-config':
         specifier: workspace:*
         version: link:../oxlint-config
-      '@rs/typescript-config':
+      '@ryangreenup/typescript-config':
         specifier: workspace:*
         version: link:../typescript_config
       '@types/node':

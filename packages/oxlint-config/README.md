@@ -1,4 +1,4 @@
-# `@rs/oxlint-config`
+# `@ryangreenup/oxlint-config`
 
 ## Overview
 
@@ -18,7 +18,7 @@ Install the config with Oxlint `^1.87.0`. For type-aware linting, also install
 `oxlint-tsgolint` `>=7.0.2004`.
 
 ```sh
-pnpm add -D @rs/oxlint-config oxlint oxlint-tsgolint
+pnpm add -D @ryangreenup/oxlint-config oxlint oxlint-tsgolint
 ```
 
 The package provides its Solid, SonarJS, and custom JavaScript plugins;
@@ -29,7 +29,7 @@ consumers needn't install them separately.
 Choose a complete preset. Add the integration presets that the project uses:
 
 ```ts
-import { playwright, solid, tanstackRouter } from "@rs/oxlint-config";
+import { playwright, solid, tanstackRouter } from "@ryangreenup/oxlint-config";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({
@@ -68,8 +68,8 @@ tsgo declaration generation independently.
 ## Formatting
 
 The package also provides the shared oxfmt config as `oxfmt.json`, exported at
-`@rs/oxlint-config/oxfmt.json`. It sets `printWidth: 80`, `proseWrap: "always"`.
-Install oxfmt alongside the config:
+`@ryangreenup/oxlint-config/oxfmt.json`. It sets `printWidth: 80`,
+`proseWrap: "always"`. Install oxfmt alongside the config:
 
 ```sh
 pnpm add -D oxfmt
@@ -79,7 +79,7 @@ Oxfmt does not have an `extends` key, and it only auto-discovers
 `.oxfmtrc.json`, so the shared file must be passed explicitly with `-c`:
 
 ```sh
-pnpm exec oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --write .
+pnpm exec oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .
 ```
 
 This package's `format`, `lint`, and `fix` scripts use `-c oxfmt.json` so local
@@ -90,8 +90,8 @@ As package scripts:
 ```json
 {
   "scripts": {
-    "format": "oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --check .",
-    "fix": "oxlint --fix .; oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json ."
+    "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
+    "fix": "oxlint --fix .; oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json ."
   }
 }
 ```
@@ -100,7 +100,7 @@ To add per-project overrides, re-export the shared config from a local
 `oxfmt.config.ts` and spread your changes on top:
 
 ```ts
-import shared from "@rs/oxlint-config/oxfmt.json" with { type: "json" };
+import shared from "@ryangreenup/oxlint-config/oxfmt.json" with { type: "json" };
 
 export default {
   ...shared,

@@ -1,5 +1,5 @@
 {
-  "extends": "@rs/typescript-config/base.json",
+  "extends": "@ryangreenup/typescript-config/base.json",
   "compilerOptions": {
     // Declaration generation uses the TypeScript compiler for inferred exports.
     "isolatedDeclarations": false,

@@ -21,7 +21,7 @@ export const solid: OxlintConfig = defineOxConfig({
   jsPlugins: [
     {
       name: "solid-js-custom",
-      specifier: "@rs/oxlint-config/plugins/solid-ref-pattern",
+      specifier: "@ryangreenup/oxlint-config/plugins/solid-ref-pattern",
     },
   ],
   rules: {

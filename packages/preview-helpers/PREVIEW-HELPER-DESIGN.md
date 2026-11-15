@@ -56,7 +56,7 @@ A `createPreviewConfig` helper would return Strapi's native
 property in `config/admin.ts`.
 
 ```ts
-import { createPreviewConfig } from "@rs/strapi-preview-helpers/server";
+import { createPreviewConfig } from "@ryangreenup/strapi-preview-helpers/server";
 
 // Within the host's existing admin configuration factory:
 preview: createPreviewConfig({

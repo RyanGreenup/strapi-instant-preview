@@ -1,5 +1,5 @@
 {
-  "extends": "@rs/typescript-config/node-app.json",
+  "extends": "@ryangreenup/typescript-config/node-app.json",
   "compilerOptions": {
     // Zod schemas export inferred types, so declarations need the compiler.
     "isolatedDeclarations": false

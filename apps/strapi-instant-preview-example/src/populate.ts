@@ -1,6 +1,6 @@
 /**
  * Default populate queries for the content types the web app reads. Each one
- * returns the shape that the matching route contract in `@rs/contract`
+ * returns the shape that the matching route contract in `@ryangreenup/contract`
  * expects. Strapi 5 populates nothing by default.
  */
 

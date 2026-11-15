@@ -2,7 +2,7 @@ import {
   previewHeaders,
   verifyPreviewUrl,
   type PreviewParams,
-} from "@rs/strapi-preview-helpers/server";
+} from "@ryangreenup/strapi-preview-helpers/server";
 import { PREVIEW_SECRET } from "astro:env/server";
 
 import { strapiPublicUrl } from "./cms";

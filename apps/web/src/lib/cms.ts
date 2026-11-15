@@ -1,4 +1,4 @@
-import type { PreviewParams } from "@rs/strapi-preview-helpers/server";
+import type { PreviewParams } from "@ryangreenup/strapi-preview-helpers/server";
 
 import {
   type ArticleSummary,
@@ -8,8 +8,12 @@ import {
   globalEndpoint,
   routes,
   strapiResponse,
-} from "@rs/contract";
-import { STRAPI_ADMIN_SEED_API_TOKEN, STRAPI_PUBLIC_URL, STRAPI_URL } from "astro:env/server";
+} from "@ryangreenup/contract";
+import {
+  STRAPI_ADMIN_SEED_API_TOKEN,
+  STRAPI_PUBLIC_URL,
+  STRAPI_URL,
+} from "astro:env/server";
 import { z } from "zod";
 
 /**
@@ -46,7 +50,8 @@ async function get<Schema extends z.ZodType>(
   status: PreviewParams["status"] = "published",
 ): Promise<z.infer<Schema>> {
   const url = new URL(endpoint, STRAPI_URL);
-  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
+  for (const [key, value] of Object.entries(query))
+    url.searchParams.set(key, value);
   // Set last, so no query can override the status.
   url.searchParams.set("status", status);
 
@@ -68,7 +73,9 @@ async function getSingle<Schema extends z.ZodType>(
   schema: Schema,
   preview?: PreviewParams,
 ): Promise<z.infer<Schema> | undefined> {
-  const query: Record<string, string> = preview?.locale ? { locale: preview.locale } : {};
+  const query: Record<string, string> = preview?.locale
+    ? { locale: preview.locale }
+    : {};
   try {
     return await get(endpoint, schema, query, preview?.status);
   } catch (error) {
@@ -86,7 +93,8 @@ export const getHome = (preview?: PreviewParams) =>
 export const getBlog = (preview?: PreviewParams) =>
   getSingle(routes.blog.endpoint, routes.blog.data, preview);
 
-export const getAbout = () => getSingle(routes.about.endpoint, routes.about.data);
+export const getAbout = () =>
+  getSingle(routes.about.endpoint, routes.about.data);
 
 /** The article with this slug, or `undefined` when there is none. */
 export async function getBlogPost(slug: string) {
@@ -107,7 +115,12 @@ export async function getPreviewBlogPost(preview: PreviewParams) {
     "filters[documentId][$eq]": preview.documentId,
   };
   if (preview.locale) query.locale = preview.locale;
-  const posts = await get(routes.blogPost.endpoint, routes.blogPost.data, query, preview.status);
+  const posts = await get(
+    routes.blogPost.endpoint,
+    routes.blogPost.data,
+    query,
+    preview.status,
+  );
   return posts[0];
 }
 
@@ -122,7 +135,8 @@ export const getArticles = () =>
  * Absolute URL of a Strapi media file. The local upload provider returns
  * paths relative to the Strapi server.
  */
-export const mediaUrl = (media: Media): string => new URL(media.url, strapiPublicUrl).href;
+export const mediaUrl = (media: Media): string =>
+  new URL(media.url, strapiPublicUrl).href;
 
 /** Site path of an article, or `undefined` while it has no slug. */
 export const articlePath = (article: ArticleSummary): string | undefined =>
@@ -140,7 +154,8 @@ export function resolveSeo(
   const defaults = site.defaultSeo;
   const image = seo?.shareImage ?? defaults?.shareImage;
   return {
-    title: seo?.metaTitle ?? fallback.title ?? defaults?.metaTitle ?? site.siteName,
+    title:
+      seo?.metaTitle ?? fallback.title ?? defaults?.metaTitle ?? site.siteName,
     description:
       seo?.metaDescription ??
       fallback.description ??

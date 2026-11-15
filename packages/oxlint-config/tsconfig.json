@@ -1,5 +1,5 @@
 {
-  "extends": "@rs/typescript-config/node-app.json",
+  "extends": "@ryangreenup/typescript-config/node-app.json",
   "compilerOptions": {
     // The generator scripts run directly under Node and import sibling `.ts` files.
     "allowImportingTsExtensions": true,

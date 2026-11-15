@@ -1,5 +1,5 @@
 {
-  "name": "@rs/oxlint-config",
+  "name": "@ryangreenup/oxlint-config",
   "version": "0.0.0",
   "description": "Oxlint Configuration",
   "license": "MIT",
@@ -55,7 +55,7 @@
     "@bomb.sh/tab": "catalog:",
     "@eslint/js": "catalog:",
     "@oxlint/migrate": "catalog:",
-    "@rs/typescript-config": "workspace:*",
+    "@ryangreenup/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "@vitest/eslint-plugin": "catalog:",

@@ -20,7 +20,7 @@ you want to autosave.
 Install the plugin in the Strapi app:
 
 ```sh
-npm install @rs/strapi-draft-autosave
+npm install @ryangreenup/strapi-draft-autosave
 ```
 
 The plugin uses the Strapi admin's own copies of React, `react-intl`,
@@ -52,7 +52,7 @@ defaults to 500 and must be at least 100. The admin panel reads it from the
 authenticated `GET /draft-autosave/config` endpoint.
 
 To show the saved draft beside the editor, pair this plugin with
-[`@rs/strapi-instant-preview`](https://www.npmjs.com/package/@rs/strapi-instant-preview).
+[`@ryangreenup/strapi-instant-preview`](https://www.npmjs.com/package/@ryangreenup/strapi-instant-preview).
 
 ## Behavior
 

@@ -23,7 +23,12 @@ interface PreviewBridgeOptions {
 const ORIGIN_MARKER = "[data-strapi-preview-origin]";
 
 function hasType(data: unknown, type: string): boolean {
-  return typeof data === "object" && data !== null && "type" in data && data.type === type;
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "type" in data &&
+    data.type === type
+  );
 }
 
 /**
@@ -37,14 +42,18 @@ function hasType(data: unknown, type: string): boolean {
  * @param options Admin origin and refresh strategy.
  * @returns A function that stops the bridge.
  */
-function startPreviewBridge(options: Readonly<PreviewBridgeOptions> = {}): () => void {
+function startPreviewBridge(
+  options: Readonly<PreviewBridgeOptions> = {},
+): () => void {
   const admin = globalThis.parent;
   const framed = admin !== globalThis.self;
 
   const adminOrigin = (): string | undefined =>
     framed
       ? (options.adminOrigin ??
-        document.querySelector<HTMLElement>(ORIGIN_MARKER)?.dataset["strapiPreviewOrigin"])
+        document.querySelector<HTMLElement>(ORIGIN_MARKER)?.dataset[
+          "strapiPreviewOrigin"
+        ])
       : undefined;
   const refresh =
     options.refresh ??

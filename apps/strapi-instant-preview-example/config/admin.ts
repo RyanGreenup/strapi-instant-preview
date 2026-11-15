@@ -1,6 +1,6 @@
 import type { Core } from "@strapi/strapi";
 
-import { createPreviewConfig } from "@rs/strapi-preview-helpers/server";
+import { createPreviewConfig } from "@ryangreenup/strapi-preview-helpers/server";
 
 const config = ({
   env,

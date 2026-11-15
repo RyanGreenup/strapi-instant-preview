@@ -17,14 +17,14 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsgo --skipLibCheck --noEmit",
-    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --check .",
-    "format": "oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --write .",
+    "lint": "oxlint --type-aware --type-check . && oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .",
     "fix": "oxlint --fix --fix-suggestions --type-aware --type-check .",
     "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@rs/oxlint-config": "workspace:*",
-    "@rs/typescript-config": "workspace:*",
+    "@ryangreenup/oxlint-config": "workspace:*",
+    "@ryangreenup/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "oxfmt": "catalog:",

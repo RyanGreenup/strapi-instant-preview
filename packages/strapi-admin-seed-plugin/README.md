@@ -90,6 +90,7 @@ pnpm run test
 ```
 
 `pnpm run format` applies the shared formatter configuration; `pnpm run fix`
-applies lint fixes. TypeScript extends `@rs/typescript-config/base.json`. tsdown
-generates declarations with tsgo and emits CommonJS `dist/index.js` because
-Strapi loads server plugins with `require`.
+applies lint fixes. TypeScript extends
+`@ryangreenup/typescript-config/base.json`. tsdown generates declarations with
+tsgo and emits CommonJS `dist/index.js` because Strapi loads server plugins with
+`require`.
