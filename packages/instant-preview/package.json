@@ -1,6 +1,6 @@
 {
   "name": "@ryangreenup/strapi-instant-preview",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Instantly preview a draft in a split by autosaving",
   "keywords": [],
   "license": "MIT",
