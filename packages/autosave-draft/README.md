@@ -17,7 +17,9 @@ you want to autosave.
 
 ## Install
 
-Install the plugin in the Strapi app:
+Install the plugin in the Strapi app [^1496019]:
+
+[^1496019]: https://www.npmjs.com/package/@ryangreenup/strapi-instant-preview
 
 ```sh
 npm install @ryangreenup/strapi-draft-autosave
