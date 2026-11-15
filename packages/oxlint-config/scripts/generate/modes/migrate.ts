@@ -1,6 +1,7 @@
+import type { Config } from "eslint/config";
+
 import makeOxlint from "@oxlint/migrate";
 import { defineConfig } from "eslint/config";
-import type { Config } from "eslint/config";
 
 /**
  * ESLint config blocks are structurally open `defineConfig` does the validation.

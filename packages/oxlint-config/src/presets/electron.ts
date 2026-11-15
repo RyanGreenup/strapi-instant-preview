@@ -1,5 +1,6 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
 
 const mainProcessFiles = ["**/src/main/index.ts"];
 const rendererEntryFiles = ["**/src/renderer/src/main.tsx"];

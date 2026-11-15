@@ -82,6 +82,9 @@ Oxfmt does not have an `extends` key, and it only auto-discovers
 pnpm exec oxfmt -c node_modules/@rs/oxlint-config/oxfmt.json --write .
 ```
 
+This package's `format`, `lint`, and `fix` scripts use `-c oxfmt.json` so local
+commands and the workspace Git hook apply the same formatting rules.
+
 As package scripts:
 
 ```json

@@ -1,5 +1,6 @@
-import { defineConfig as defineOxConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig as defineOxConfig } from "oxlint";
 
 import solidJson from "../generated/recommended/solid-recommended.json";
 import { asConfig } from "../internal/as-config";

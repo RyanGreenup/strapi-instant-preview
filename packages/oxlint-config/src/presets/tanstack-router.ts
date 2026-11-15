@@ -1,5 +1,6 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
 
 const tanstackRouter: OxlintConfig = defineConfig({
   ignorePatterns: ["**/src/routeTree.gen.ts"],

@@ -1,5 +1,6 @@
-import { defineConfig as defineOxConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig as defineOxConfig } from "oxlint";
 
 import { solid } from "./solid";
 

@@ -1,6 +1,7 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
-import { asConfig } from "./as-config";
+
+import { defineConfig } from "oxlint";
+
 /* All JSON below is generated at build time by scripts/generate/index.ts.
  * Plugins with native oxlint ports are migrated to oxlint rules; sonarjs has no
  * port and runs through its JS plugin (loaded via the jsPlugins field baked
@@ -19,6 +20,7 @@ import sonarjsJson from "../generated/recommended/sonarjs-recommended.json";
 import typescriptJson from "../generated/recommended/typescript-recommended.json";
 import unicornJson from "../generated/recommended/unicorn-recommended.json";
 import vitestJson from "../generated/recommended/vitest-recommended.json";
+import { asConfig } from "./as-config";
 
 const eslintRecommended = asConfig(eslintJson);
 const typescriptRecommended = asConfig(typescriptJson);

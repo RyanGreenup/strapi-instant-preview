@@ -18,7 +18,12 @@
       "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts"],
       // "package.json" is already in $TURBO_DEFAULT$; one positive glob keeps
       // .gitignore applied when there is no .git (turbo prune, Docker).
-      "inputs": ["$TURBO_DEFAULT$", "package.json", "!src/generated/recommended/**", "!README.md"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "package.json",
+        "!src/generated/recommended/**",
+        "!README.md"
+      ]
     },
     "generate-artifacts": {
       "cache": true,
@@ -36,7 +41,11 @@
       // Self-referential: oxlint.config.ts loads the base config and JS
       // plugins from this package's dist/, so lint must wait for build.
       "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts", "build"],
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.gitignore", "!src/generated/recommended/**"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.gitignore",
+        "!src/generated/recommended/**"
+      ]
     },
     "test": {
       "dependsOn": ["$TURBO_EXTENDS$", "generate-artifacts"],

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { collectRules } from "../../scripts/generate/rules/collect-rules.ts";
 import { normalizeLevel } from "../../scripts/generate/rules/normalize-level.ts";
 

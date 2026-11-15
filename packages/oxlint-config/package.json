@@ -33,13 +33,13 @@
     "access": "public"
   },
   "scripts": {
-    "format": "oxfmt --write .",
+    "format": "oxfmt -c oxfmt.json --write .",
     "build": "tsdown",
     "check-types": "tsgo --noEmit",
     "dev": "tsdown --watch",
     "generate-artifacts": "node scripts/generate/index.ts generate --out-dir src/generated/recommended",
-    "lint": "oxlint --type-aware --type-check . && oxfmt --check .",
-    "fix": "oxlint --fix .; oxfmt .",
+    "lint": "oxlint --type-aware --type-check . && oxfmt -c oxfmt.json --check .",
+    "fix": "oxlint --fix . && oxfmt -c oxfmt.json --write .",
     "test": "vitest run",
     "test:package": "pnpm run generate-artifacts && pnpm run build && node scripts/check-package.ts",
     "release": "bumpp",

@@ -1,5 +1,6 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
 
 import jsxA11yJson from "../generated/recommended/jsx-a11y-recommended.json";
 import { asConfig } from "../internal/as-config";

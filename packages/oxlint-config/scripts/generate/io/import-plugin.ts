@@ -1,5 +1,6 @@
-import { isRecord } from "../guards.ts";
 import type { PluginModule } from "../plugins/types.ts";
+
+import { isRecord } from "../guards.ts";
 
 function isPluginModule(value: unknown): value is PluginModule {
   return isRecord(value) && "default" in value;

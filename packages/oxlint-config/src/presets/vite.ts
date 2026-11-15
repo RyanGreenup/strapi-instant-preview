@@ -1,5 +1,6 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
 
 /*
  * Vite has one convention: index.html loads a single module that mounts the

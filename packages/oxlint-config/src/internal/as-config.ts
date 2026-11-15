@@ -1,5 +1,6 @@
-import { defineConfig } from "oxlint";
 import type { OxlintConfig } from "oxlint";
+
+import { defineConfig } from "oxlint";
 
 /**
  * Oxlint configs are structurally open, so the generated JSON only has to be an
