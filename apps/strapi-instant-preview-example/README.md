@@ -97,10 +97,12 @@ query strings out of proxy/access logs. The API token stays on the servers; only
 an HMAC signature reaches the browser. Rotating `PREVIEW_SECRET` revokes
 existing links without touching the API token.
 
-The content API grants no role any access: `src/index.ts` removes role content
-permissions on every boot, so only an API token can read content. The web server
-sends that token with every read and requests published content, except for a
-verified preview link, which reads the status it signed.
+Grant the Public and Authenticated roles no content permissions, so only an API
+token can read content. A fresh database starts that way. Role permissions
+cannot tell draft reads from published reads: any role with `find` or `findOne`
+on a content type can request `?status=draft`. The web server sends the token
+with every read and requests published content, except for a verified preview
+link, which reads the status it signed.
 
 To query the content API by hand, send the same token:
 

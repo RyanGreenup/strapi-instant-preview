@@ -26,6 +26,17 @@ describe("toAbsoluteUrl", () => {
     );
   });
 
+  it.each([
+    // oxlint-disable-next-line no-script-url -- The test proves this URL is rejected.
+    "javascript:alert(document.domain)",
+    "data:text/html,<script>alert(document.domain)</script>",
+    "ftp://web.example/preview",
+    "blob:https://web.example/preview",
+    " \tJaVaScRiPt:alert(document.domain)",
+  ])("rejects non-HTTP(S) preview URL %j", (raw) => {
+    expect(toAbsoluteUrl(raw, ADMIN)).toBeUndefined();
+  });
+
   it.each([undefined, "", "http://", "https://exa mple.com/"])(
     "returns nothing for %j",
     (raw) => {
