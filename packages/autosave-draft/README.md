@@ -56,6 +56,13 @@ startup.
   response updates its cached document rather than refetching, preserving
   dynamic-zone focus. Edits made during the request remain in the form and
   autosave next. Manual Save and Publish remain available.
+- Request data follows Save's relation conversion and conditional-field
+  filtering, including nested components and dynamic zones. Hidden fields are
+  omitted, not cleared from stored drafts; backend-managed `visible: false`
+  fields are preserved.
+- Existing non-default-locale updates retain shared fields, as Strapi Save does.
+  Strapi's locked-shared-field omission applies only when creating a missing
+  locale; autosave requires an existing entry.
 - Leaving during the delay does not flush pending edits. Strapi's normal
   unsaved-change confirmation still applies.
 
@@ -111,8 +118,6 @@ Other inherited limits:
 
 - Autosave runs only while Strapi mounts its side panel. On narrow screens,
   closing the panel drawer can stop autosave.
-- Conditionally hidden fields are sent as held by the form; Strapi's manual Save
-  action filters them.
 - Publishing while an autosave is already in flight can leave the entry marked
   Modified even when its content matches the published version.
 

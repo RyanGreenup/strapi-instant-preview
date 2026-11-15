@@ -1,0 +1,140 @@
+import type { AddressInfo } from "node:net";
+
+import { once } from "node:events";
+import { createServer } from "node:http";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
+
+import type { AutosaveContext, Values } from "./useAutosaveContext";
+import type { AutosaveController } from "./useAutosaveSession";
+
+import { useAutosaveSave } from "./useAutosaveSave";
+
+vi.setConfig({ testTimeout: 2000 });
+const noop = (): void => {
+  /* State setters are inert in this server-rendered harness. */
+};
+const notRendered = (): Promise<boolean> =>
+  Promise.reject(new Error("Harness not rendered"));
+
+describe("autosave draft requests", () => {
+  it.each([
+    {
+      scenario: "omits conditionally hidden fields",
+      nested: { id: 1, showDetails: false, details: "Nested hidden" },
+      expectedNested: { id: 1, showDetails: false },
+    },
+    {
+      scenario: "preserves a missing component from the baseline as Save does",
+      nested: undefined,
+      expectedNested: { id: 1, showDetails: false, details: "Baseline hidden" },
+    },
+  ])(
+    "autosave $scenario in the draft request",
+    async ({ nested, expectedNested }) => {
+      let body: unknown = null;
+      const server = createServer((request, response) => {
+        let data = "";
+        request.on("data", (chunk) => {
+          data += String(chunk);
+        });
+        request.on("end", () => {
+          body = JSON.parse(data);
+          response.end("{}");
+        });
+      });
+      const listening = once(server, "listening");
+      server.listen(0, "127.0.0.1");
+      await listening;
+      const address = server.address() as AddressInfo;
+      const values = {
+        title: "Edited",
+        showDetails: false,
+        details: "Hidden value",
+        shared: "Shared across locales",
+        nested,
+      };
+      const context = {
+        initialValues: {
+          ...values,
+          nested: { id: 1, showDetails: false, details: "Baseline hidden" },
+        },
+        attributes: {
+          title: { type: "string" },
+          showDetails: { type: "boolean" },
+          details: {
+            type: "string",
+            conditions: { visible: { "==": [{ var: "showDetails" }, true] } },
+          },
+          shared: {
+            type: "string",
+            pluginOptions: { i18n: { localized: false } },
+          },
+          nested: { type: "component", component: "example.details" },
+        },
+        components: {
+          "example.details": {
+            attributes: {
+              showDetails: { type: "boolean" },
+              details: {
+                type: "string",
+                conditions: {
+                  visible: { "==": [{ var: "showDetails" }, true] },
+                },
+              },
+            },
+          },
+        },
+        documentArgs: { params: { locale: "fr" } },
+        cachedDocument: { id: 1, documentId: "existing", locale: "fr" },
+        getValues: () => values,
+        validate: () => Promise.resolve({}),
+        refetch: noop,
+        key: "conditional-regression",
+        saveDraft: ({ data }: { data: unknown }) => ({
+          unwrap: async () => {
+            await fetch(`http://127.0.0.1:${address.port}`, {
+              method: "PUT",
+              body: JSON.stringify(data),
+            });
+            return { didUpdateCache: true };
+          },
+        }),
+      } as unknown as AutosaveContext;
+      const controller: AutosaveController = {
+        latest: { current: context },
+        isBusy: { current: false },
+        lastSent: { current: undefined },
+        failedFor: { current: undefined },
+        awaitingReload: { current: undefined },
+        setPhase: noop,
+        setLastSavedAt: noop,
+        setDetail: noop,
+        setSnapshot: noop,
+        setIsReverting: noop,
+        setSaveCount: noop,
+      };
+      let save: (override?: Values) => Promise<boolean> = notRendered;
+      const Harness = (): null => {
+        save = useAutosaveSave(controller);
+        return null;
+      };
+      try {
+        renderToStaticMarkup(createElement(Harness));
+        await expect(save()).resolves.toBe(true);
+        expect(body).toStrictEqual({
+          title: "Edited",
+          showDetails: false,
+          shared: "Shared across locales",
+          nested: expectedNested,
+        });
+      } finally {
+        clearTimeout(controller.awaitingReload.current?.timeout);
+        const closed = once(server, "close");
+        server.close();
+        await closed;
+      }
+    },
+  );
+});

@@ -6,6 +6,7 @@ import type { AutosaveController, PendingReload } from "./useAutosaveSession";
 import { describeSaveError } from "../logic/describeSaveError";
 import { hasRelationChanges } from "../logic/hasRelationChanges";
 import { isEqual } from "../logic/isEqual";
+import { omitInvisibleFields } from "../logic/omitInvisibleFields";
 import { readSnapshot, writeSnapshot } from "../logic/snapshot";
 import { toApiData } from "../logic/toApiData";
 
@@ -106,7 +107,11 @@ const storeValues = async (
     const { didUpdateCache } = await current
       .saveDraft({
         url: current.url,
-        data: toApiData(sent),
+        data: omitInvisibleFields(toApiData(sent) as Values, {
+          attributes: current.attributes,
+          initialValues: current.initialValues,
+          components: current.components,
+        }),
         documentArgs: current.documentArgs,
         refreshRelations: hasRelationChanges(sent),
       })

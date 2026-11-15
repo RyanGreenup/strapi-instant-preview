@@ -6,7 +6,10 @@ import {
 } from "@strapi/strapi/admin";
 import { useMemo } from "react";
 
-import type { Attributes, ComponentSchemas } from "../logic/buildRevertValues";
+import type {
+  Attributes,
+  Components as ComponentSchemas,
+} from "../logic/omitInvisibleFields";
 import type { DocumentArgs, SaveDraft } from "../services/saveDraft";
 import type { AutosaveTarget } from "./useAutosave";
 
