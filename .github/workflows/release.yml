@@ -1,0 +1,141 @@
+# Publish a plugin to npm and create a GitHub release when its tag is pushed.
+#
+# Tag format: <unscoped package name>@<version>, for example
+#   strapi-draft-autosave@0.1.0
+#   strapi-instant-preview@0.2.0-beta.1
+#
+# The tag version must match the package.json version.
+#
+# npm authentication uses OIDC, so there is no token secret.
+name: Release
+
+on:
+  push:
+    tags:
+      - "strapi-draft-autosave@*"
+      - "strapi-instant-preview@*"
+
+permissions: {}
+
+concurrency:
+  group: "release-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm trusted publishing and provenance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history and tags, for release notes
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Resolve package from tag
+        id: pkg
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          name="${TAG%@*}"
+          version="${TAG##*@}"
+          case "$name" in
+            strapi-draft-autosave) dir=packages/autosave-draft ;;
+            strapi-instant-preview) dir=packages/instant-preview ;;
+            *) echo "::error::Unknown package in tag: $name"; exit 1 ;;
+          esac
+
+          package_name="$(node -p "require('./$dir/package.json').name")"
+          package_version="$(node -p "require('./$dir/package.json').version")"
+          if [ "$version" != "$package_version" ]; then
+            echo "::error::Tag version $version does not match $dir/package.json version $package_version"
+            exit 1
+          fi
+
+          if [[ "$version" == *-* ]]; then
+            prerelease=true
+            dist_tag=next
+          else
+            prerelease=false
+            dist_tag=latest
+          fi
+
+          {
+            echo "dir=$dir"
+            echo "name=$package_name"
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+            echo "dist_tag=$dist_tag"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and check
+        env:
+          PACKAGE: ${{ steps.pkg.outputs.name }}
+        run: pnpm turbo run build check-types lint test --filter "${PACKAGE}..."
+
+      - name: Pack
+        id: pack
+        env:
+          DIR: ${{ steps.pkg.outputs.dir }}
+        run: |
+          out="$RUNNER_TEMP/pack"
+          mkdir -p "$out"
+          # pnpm pack rewrites catalog: and workspace: ranges to real versions.
+          (cd "$DIR" && pnpm pack --pack-destination "$out")
+          tarball="$(ls "$out"/*.tgz)"
+          tar -tzf "$tarball"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to npm
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          DIST_TAG: ${{ steps.pkg.outputs.dist_tag }}
+        run: |
+          # Trusted publishing needs npm 11.5.1 or later.
+          npm install --global npm@11
+          npm publish "$TARBALL" --access public --provenance --tag "$DIST_TAG"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          DIR: ${{ steps.pkg.outputs.dir }}
+          NAME: ${{ steps.pkg.outputs.name }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          PRERELEASE: ${{ steps.pkg.outputs.prerelease }}
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: |
+          prefix="${TAG%@*}@"
+          # The nearest earlier tag of the same package, if any.
+          previous="$(git describe --tags --abbrev=0 --match "${prefix}*" "${TAG}^" 2>/dev/null || true)"
+          range="${previous:+$previous..}$TAG"
+
+          notes="$RUNNER_TEMP/notes.md"
+          {
+            echo "npm: https://www.npmjs.com/package/$NAME/v/$VERSION"
+            echo
+            echo "## Changes"
+            echo
+            git log --no-merges --format='- %s (%h)' "$range" -- "$DIR"
+          } > "$notes"
+
+          flags=()
+          if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
+
+          gh release create "$TAG" "$TARBALL" \
+            --verify-tag \
+            --title "$NAME $VERSION" \
+            --notes-file "$notes" \
+            "${flags[@]}"
