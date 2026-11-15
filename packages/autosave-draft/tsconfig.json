@@ -7,5 +7,5 @@
     "isolatedDeclarations": false,
     "types": ["node", "react", "react-dom"]
   },
-  "include": ["admin", "*.config.mts"]
+  "include": ["admin", "server", "*.config.mts"]
 }

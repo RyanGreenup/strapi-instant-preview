@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@moworks/strapi-admin-seed-plugin": "workspace:*",
+    "@rs/strapi-draft-autosave": "workspace:*",
     "@strapi/database": "5.62.0",
     "@strapi/plugin-cloud": "5.62.0",
     "@strapi/plugin-users-permissions": "5.62.0",

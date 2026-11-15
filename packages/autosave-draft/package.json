@@ -1,7 +1,7 @@
 {
   "name": "@rs/strapi-draft-autosave",
   "version": "0.0.1",
-  "description": "Instantly preview a draft in a split by autosaving",
+  "description": "Autosave Strapi drafts with a per-tab revert snapshot",
   "keywords": [],
   "license": "MIT",
   "author": "Ryan Greenup <ryanxgreenup@gmail.com>",
@@ -17,6 +17,10 @@
       "import": "./dist/admin/index.mjs",
       "require": "./dist/admin/index.js",
       "default": "./dist/admin/index.js"
+    },
+    "./strapi-server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
     }
   },
   "scripts": {
@@ -32,7 +36,6 @@
     "@rs/oxlint-config": "workspace:*",
     "@rs/typescript-config": "workspace:*",
     "@strapi/design-system": "catalog:",
-    "@strapi/icons": "catalog:",
     "@strapi/strapi": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -44,7 +47,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-intl": "catalog:",
-    "react-router-dom": "catalog:",
     "styled-components": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
@@ -52,18 +54,16 @@
   },
   "peerDependencies": {
     "@strapi/design-system": "^2.3.1",
-    "@strapi/icons": "^2.3.1",
     "@strapi/strapi": "^5.62.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.9",
-    "react-router-dom": "^6.30.6",
     "styled-components": "^6.6.0"
   },
   "strapi": {
     "kind": "plugin",
-    "name": "instant-preview",
-    "displayName": "Instant Preview",
-    "description": "Instantly preview a draft in a split by autosaving"
+    "name": "draft-autosave",
+    "displayName": "Draft Autosave",
+    "description": "Autosave drafts with a per-tab revert snapshot"
   }
 }

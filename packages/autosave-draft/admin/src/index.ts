@@ -1,33 +1,28 @@
 import type { StrapiApp } from "@strapi/strapi/admin";
 
-import { Initializer } from "./components/Initializer";
-import { PluginIcon } from "./components/PluginIcon";
+import { AutosavePanel } from "./components/AutosavePanel";
 import { PLUGIN_ID } from "./pluginId";
 import { getTranslation } from "./utils/getTranslation";
 
-const translations = import.meta.glob<{ default: Record<string, string> }>(
+const translations = import.meta.glob<Record<string, string>>(
   "./translations/*.json",
+  { import: "default" },
 );
 
 const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
-    app.addMenuLink({
-      to: `plugins/${PLUGIN_ID}`,
-      icon: PluginIcon,
-      intlLabel: {
-        id: `${PLUGIN_ID}.plugin.name`,
-        defaultMessage: PLUGIN_ID,
-      },
-      Component: () => import("./pages/App"),
-      permissions: [],
-    });
-
     app.registerPlugin({
       id: PLUGIN_ID,
-      initializer: Initializer,
-      isReady: false,
       name: PLUGIN_ID,
     });
+  },
+
+  bootstrap(app) {
+    const contentManager = app.getPlugin("content-manager");
+    const apis = contentManager.apis as {
+      addEditViewSidePanel: (panels: unknown[]) => void;
+    };
+    apis.addEditViewSidePanel([AutosavePanel]);
   },
 
   async registerTrads({ locales }) {
@@ -39,7 +34,7 @@ const plugin: StrapiApp["appPlugins"][string] = {
             return { data: {}, locale };
           }
 
-          const { default: data } = await loadTranslation();
+          const data = await loadTranslation();
 
           const newData: Record<string, string> = {};
 

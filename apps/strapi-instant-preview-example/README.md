@@ -13,6 +13,7 @@ Run from the repository root:
 
 ```sh
 pnpm --dir packages/strapi-admin-seed-plugin build
+pnpm --dir packages/autosave-draft build
 mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
 ```
 
@@ -45,6 +46,18 @@ and records a database marker and wont reset an existing admin's password. The
 `admin-seed` read-only content API token is reconciled with its encrypted
 environment value on every boot. `STRAPI_ADMIN_SEED_MODE=always` also reconciles
 the admin on every boot; use it only when that behavior is intended.
+
+## Draft autosave
+
+The example enables the workspace
+[`@rs/strapi-draft-autosave`](../../packages/autosave-draft/) plugin. Open an
+existing article's Draft tab, edit a field, and pause for 1/2 a second.. The
+Autosave panel shows the saved time and offers a revert to the original draft.
+New entries require an initial save before autosave starts.
+
+Set `DRAFT_AUTOSAVE_DEBOUNCE_MS` to change the delay (minimum 100 milliseconds),
+then restart Strapi. Publishing clears the per-tab revert snapshot. Autosave
+never publishes content.
 
 ### `develop`
 

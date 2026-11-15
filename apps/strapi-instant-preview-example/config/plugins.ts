@@ -32,6 +32,12 @@ const config = ({
       mode: env("STRAPI_ADMIN_SEED_MODE", "once"),
     },
   },
+  "draft-autosave": {
+    enabled: true,
+    config: {
+      debounceMs: env.int("DRAFT_AUTOSAVE_DEBOUNCE_MS", 500),
+    },
+  },
   "users-permissions": {
     config: {
       jwtManagement: "refresh",

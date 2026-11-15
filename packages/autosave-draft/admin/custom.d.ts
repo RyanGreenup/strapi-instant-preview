@@ -1,6 +1,6 @@
-declare module "@strapi/design-system/*";
-declare module "@strapi/design-system";
-
 interface ImportMeta {
-  glob: <T>(pattern: string) => Record<string, () => Promise<T>>;
+  glob: <T>(
+    pattern: string,
+    options: { import: "default" },
+  ) => Record<string, () => Promise<T>>;
 }

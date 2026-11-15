@@ -1,1 +1,21 @@
-{}
+{
+  "panel.title": "Autosave",
+  "toggle.label": "Autosave draft",
+  "toggle.on": "On",
+  "toggle.off": "Off",
+  "status.off": "Autosave is off. Use Save to store changes.",
+  "status.unsaved-entry": "Autosave starts after the first save.",
+  "status.ineligible": "Autosave is not available here.",
+  "status.idle": "No changes to save.",
+  "status.pending": "Changes waiting to save...",
+  "status.saving": "Saving...",
+  "status.saved": "Saved at {time}",
+  "status.invalid": "Not saved: fix the errors in the form.",
+  "status.detail": "Not saved: {detail}",
+  "status.error": "Save failed. It is tried again on the next change.",
+  "revert.button": "Revert to {time}",
+  "revert.title": "Revert the draft?",
+  "revert.body": "The draft goes back to how it was at {time}, before autosave changed it. Relation and media fields are not reverted.",
+  "revert.confirm": "Revert",
+  "revert.cancel": "Cancel"
+}
