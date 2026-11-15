@@ -1,18 +1,22 @@
 import {
   ABOUT_EDIT_VIEW,
   adminWidth,
+  ARTICLE_API,
   ARTICLES,
   BELOW_DESKTOP,
   expect,
   frame,
   frameContent,
   HOME_EDIT_VIEW,
+  isArticleSave,
   openArticle,
   openEditView,
   test,
   toggleButton,
   WIDE,
 } from "./fixtures";
+
+const TYPING_ARTICLE_SLUG = "a-bug-is-becoming-a-meme-on-the-internet";
 
 // Fresh browser contexts reset plugin preferences: the desktop dock opens at 40%.
 
@@ -76,6 +80,54 @@ test.describe("at desktop width", () => {
     await expect(
       frameContent(page).getByRole("heading", { level: 1 }),
     ).toHaveText(SLUG_ARTICLE);
+  });
+
+  test("text typed during an autosave survives the save", async ({ page }) => {
+    await openArticle(page, TYPING_ARTICLE_SLUG);
+    const titleField = page.getByRole("textbox", { name: "title" });
+    const descriptionField = page.getByRole("textbox", { name: "description" });
+
+    // Hold the first save open so the next edit happens during the request.
+    let release = (): void => {
+      /* Replaced when the first save arrives. */
+    };
+    let held = 0;
+    await page.route(`**${ARTICLE_API}**`, async (route) => {
+      if (isArticleSave(route.request())) {
+        held += 1;
+        if (held === 1) {
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+      }
+      await route.continue();
+    });
+
+    const title = `Held title ${Date.now()}`;
+    const firstSave = page.waitForRequest(isArticleSave);
+    await titleField.fill(title);
+    await firstSave;
+
+    const description = `Typed mid-save ${Date.now()}`;
+    await descriptionField.fill(description);
+    const firstResponse = page.waitForResponse((response) =>
+      isArticleSave(response.request()),
+    );
+    const secondSave = page.waitForRequest(
+      (request) =>
+        isArticleSave(request) &&
+        (request.postData() ?? "").includes(description),
+    );
+    release();
+    expect((await firstResponse).status()).toBe(200);
+
+    // The form adopts the saved document but keeps the newer edit, then saves it.
+    await expect(page.getByText("Modified", { exact: true })).toBeVisible();
+    await expect(titleField).toHaveValue(title);
+    await expect(descriptionField).toHaveValue(description);
+    await secondSave;
+    await expect(descriptionField).toHaveValue(description);
   });
 
   test("documents without a preview show no panel", async ({ page }) => {

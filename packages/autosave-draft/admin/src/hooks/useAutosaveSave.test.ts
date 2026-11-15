@@ -138,3 +138,55 @@ describe("autosave draft requests", () => {
     },
   );
 });
+
+describe("autosave cache misses", () => {
+  it("warns once and refetches when no cached document matched", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(noop);
+    const refetch = vi.fn<() => void>();
+    const context = {
+      initialValues: {},
+      attributes: undefined,
+      components: {},
+      documentArgs: {},
+      cachedDocument: { id: 1 },
+      getValues: () => ({ title: "Edited" }),
+      validate: () => Promise.resolve({}),
+      refetch,
+      key: "cache-miss",
+      saveDraft: () => ({
+        unwrap: () => Promise.resolve({ didUpdateCache: false }),
+      }),
+    } as unknown as AutosaveContext;
+    const controller: AutosaveController = {
+      latest: { current: context },
+      isBusy: { current: false },
+      lastSent: { current: undefined },
+      failedFor: { current: undefined },
+      awaitingReload: { current: undefined },
+      setPhase: noop,
+      setLastSavedAt: noop,
+      setDetail: noop,
+      setSnapshot: noop,
+      setIsReverting: noop,
+      setSaveCount: noop,
+    };
+    let save: (override?: Values) => Promise<boolean> = notRendered;
+    const Harness = (): null => {
+      save = useAutosaveSave(controller);
+      return null;
+    };
+    try {
+      renderToStaticMarkup(createElement(Harness));
+      // Each override is a separate save of the same document.
+      await expect(save({ title: "First" })).resolves.toBe(true);
+      await expect(save({ title: "Second" })).resolves.toBe(true);
+      expect(refetch).toHaveBeenCalledTimes(2);
+      expect(warn).toHaveBeenCalledExactlyOnceWith(
+        expect.stringMatching(/^draft-autosave: .*cached document/u),
+      );
+    } finally {
+      clearTimeout(controller.awaitingReload.current?.timeout);
+      warn.mockRestore();
+    }
+  });
+});

@@ -1,9 +1,16 @@
 # Draft Autosave
 
-`@rs/strapi-draft-autosave` saves existing drafts while editors work in Strapi's
-Content Manager. Its Autosave side panel provides a browser-wide toggle, save
-status, and a per-tab revert snapshot. It does not add a menu page or publish
-content.
+This plugin saves existing drafts while editors work in Strapi's Content
+Manager. It has browser-wide toggle, save status, and a per-tab revert snapshot.
+It doesn't add a menu page or publish content.
+
+This allows server side rendered html to get a live preview, unlike the Strapi
+live preview plugin which relies on client side rendering. If you're using Astro
+islands, Tanstack Start, Svelte Kit, Next.js, Nuxt etc. it may be better to to
+pass the form content via `useForm` via an iframe channel. This plugin is for
+Astro where islands are not necessarily used throughout, previewing dynamic zone
+blocks in real time is important and getting a single source of truth for the
+cms data flow is valued.
 
 ## Setup
 
@@ -26,12 +33,13 @@ Enable it in `config/plugins.ts`:
 },
 ```
 
-The delay defaults to 500 milliseconds and must be finite and at least 100. The
-authenticated `GET /draft-autosave/config` endpoint supplies it to the admin
-panel. Restart Strapi after changing server configuration.
+The delay defaults to 500 milliseconds > 100 ms. The authenticated
+`GET /draft-autosave/config` endpoint supplies it to the admin panel.
 
-The [example app](../../apps/strapi-instant-preview-example/) already enables
-the plugin. From the repository root:
+The [example app](../../apps/strapi-instant-preview-example/) enables the plugin
+as an example.
+
+From the repository root:
 
 ```sh
 pnpm install
@@ -40,57 +48,30 @@ pnpm --dir packages/strapi-admin-seed-plugin build
 mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
 ```
 
-Restart Strapi after rebuilding the plugin; the admin bundle is assembled at
-startup.
-
 ## Behavior
 
 - Autosave is on by default. `localStorage` remembers the toggle across entries.
 - Only existing entries with Draft & Publish, an active Draft tab, and update
-  permission qualify. New entries need their first manual save. Content types
-  without drafts have no Autosave panel.
+  permission qualify. New entries need an initial save.
 - Any form change restarts the delay, including component edits, reorderings,
-  relations, and media pickers. Validation failures prevent a request without
-  displaying field errors. A later edit retries failed or invalid saves.
-- Saves use Content Manager's update route without a notification toast. The
-  response updates its cached document rather than refetching, preserving
-  dynamic-zone focus. Edits made during the request remain in the form and
-  autosave next. Manual Save and Publish remain available.
+  relations, and media pickers.
+- Saves use Content Manager's update route without a notification toast.
 - Request data follows Save's relation conversion and conditional-field
-  filtering, including nested components and dynamic zones. Hidden fields are
-  omitted, not cleared from stored drafts; backend-managed `visible: false`
-  fields are preserved.
-- Existing non-default-locale updates retain shared fields, as Strapi Save does.
-  Strapi's locked-shared-field omission applies only when creating a missing
-  locale; autosave requires an existing entry.
-- Leaving during the delay does not flush pending edits. Strapi's normal
-  unsaved-change confirmation still applies.
+  filtering, including nested components and dynamic zones, hidden fields are
+  omitted and backend-managed `visible: false` fields are preserved.
+- Existing non-default-locale updates keep shared fields, as Strapi Save does.
 
 ### Revert
 
 Before the first autosave attempt, the plugin snapshots the form's initial
 values in `sessionStorage`, keyed by model, document, and locale. The snapshot
-survives page reloads in that tab. Publishing or a successful revert clears it.
+persists across page reloads in that tab. Publishing or a successful revert
+clears it.
 
 Revert restores and saves plain fields, components, and dynamic zones. It keeps
 current top-level media and relations. Within components, media is restored and
 existing instances retain their current relation state. Recreating a deleted
 component does not restore its relation links.
-
-## Structure
-
-- `admin/src/index.ts` registers the side panel and lazy translations.
-- `components/` renders the toggle, status, and revert confirmation.
-- `hooks/useAutosave.ts` composes the autosave lifecycle.
-- `hooks/useAutosaveContext.ts` reads Strapi's document, form, and permissions.
-- `hooks/useAutosaveSession.ts` owns save state and snapshot lifetime.
-- `hooks/useAutosaveSave.ts` validates and serializes save requests.
-- `hooks/useAutosaveLifecycle.ts` schedules saves, reconciles form reloads, and
-  restores snapshots.
-- `services/saveDraft.ts` sends updates and patches Content Manager's cache.
-- `logic/` contains data transforms, comparison, snapshot storage, and their
-  behavioral tests.
-- `server/src/index.ts` validates configuration and serves the admin endpoint.
 
 ## Checks and compatibility
 
@@ -103,18 +84,19 @@ pnpm run lint
 pnpm run test
 ```
 
-The shared tsdown configuration emits ESM/CommonJS admin bundles and a CommonJS
-server bundle under `dist/`, with declarations. TypeScript, Oxlint, and Oxfmt
-use the workspace configs. No separate package lockfile or Strapi SDK build is
-needed.
+Verified against Strapi 5.62. The plugin uses Content Manager's public
+`buildValidParams` export to share the edit view's query parameters and cached
+document. It also relies on `unstable_useDocument`, the Content Manager update
+route, and its internal `getDocument` cache arguments. If a cache entry cannot
+be updated, the plugin refetches; dynamic-zone fields can lose focus during that
+fallback. Recheck editing, in-flight changes, and revert behavior after
+upgrading Strapi.
 
-Verified against Strapi 5.62. The plugin relies on `unstable_useDocument`, the
-Content Manager update route, and its internal `getDocument` cache arguments. If
-a cache entry cannot be updated, the plugin refetches; dynamic-zone fields can
-lose focus during that fallback. Recheck editing, in-flight changes, and revert
-behavior after upgrading Strapi.
+If Content Manager's `addEditViewSidePanel` API is missing or not callable,
+bootstrap logs a compatibility warning and disables only autosave. The remaining
+admin plugins can still load.
 
-Other inherited limits:
+Other limits:
 
 - Autosave runs only while Strapi mounts its side panel. On narrow screens,
   closing the panel drawer can stop autosave.

@@ -1,3 +1,4 @@
+import { buildValidParams } from "@strapi/content-manager/strapi-admin";
 import {
   unstable_useDocument as useDocument,
   useDocumentRBAC,
@@ -13,7 +14,6 @@ import type {
 import type { DocumentArgs, SaveDraft } from "../services/saveDraft";
 import type { AutosaveTarget } from "./useAutosave";
 
-import { buildValidParams } from "../logic/buildValidParams";
 import { snapshotKey } from "../logic/snapshot";
 import { useSaveDraftMutation } from "../services/saveDraft";
 

@@ -17,6 +17,7 @@ catalog:
   "@oxlint/migrate": 1.93.0
   "@oxlint/plugins": 1.93.0
   "@playwright/test": 1.65.1
+  "@strapi/content-manager": ^5.62.0
   "@strapi/design-system": ^2.3.1
   "@strapi/icons": ^2.3.1
   "@strapi/strapi": ^5.62.0

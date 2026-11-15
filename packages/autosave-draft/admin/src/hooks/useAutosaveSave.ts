@@ -9,6 +9,7 @@ import { isEqual } from "../logic/isEqual";
 import { omitInvisibleFields } from "../logic/omitInvisibleFields";
 import { readSnapshot, writeSnapshot } from "../logic/snapshot";
 import { toApiData } from "../logic/toApiData";
+import { warnOnce } from "../utils/warnOnce";
 
 type Save = (override?: Values) => Promise<boolean>;
 const REFRESH_TIMEOUT_MS = 5000;
@@ -120,6 +121,9 @@ const storeValues = async (
     controller.failedFor.current = undefined;
     expireReload(controller, pending);
     if (!didUpdateCache) {
+      warnOnce(
+        "the edit view's cached document was not found; autosave reloads the form instead",
+      );
       // A cache miss requires refetching, despite disabling dynamic zone fields temporarily.
       current.refetch();
     }

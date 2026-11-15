@@ -35,6 +35,7 @@
   "devDependencies": {
     "@rs/oxlint-config": "workspace:*",
     "@rs/typescript-config": "workspace:*",
+    "@strapi/content-manager": "catalog:",
     "@strapi/design-system": "catalog:",
     "@strapi/strapi": "catalog:",
     "@types/node": "catalog:",
@@ -53,6 +54,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@strapi/content-manager": "^5.62.0",
     "@strapi/design-system": "^2.3.1",
     "@strapi/strapi": "^5.62.0",
     "react": "^18.3.1",

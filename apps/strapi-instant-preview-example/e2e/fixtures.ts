@@ -4,6 +4,7 @@ import {
   type FrameLocator,
   type Locator,
   type Page,
+  type Request,
 } from "@playwright/test";
 
 const CONTENT_MANAGER = "/admin/content-manager";
@@ -11,7 +12,9 @@ const HOME_EDIT_VIEW = `${CONTENT_MANAGER}/single-types/api::home.home`;
 const ABOUT_EDIT_VIEW = `${CONTENT_MANAGER}/single-types/api::about.about`;
 const ARTICLES = `${CONTENT_MANAGER}/collection-types/api::article.article`;
 const PREVIEW_ROUTE = "/content-manager/preview/url/";
-const PLUGIN_PREFIX = "instant-preview:";
+const ARTICLE_API = "/content-manager/collection-types/api::article.article/";
+// Both plugins prefix their broken-assumption warnings with their plugin ID.
+const PLUGIN_PREFIXES = ["instant-preview:", "draft-autosave:"];
 
 // Strapi shows side panels beside the form from 1080px. The wide viewport
 // leaves the form its side column; the narrow one forces the reflow.
@@ -81,15 +84,21 @@ const openArticle = async (page: Page, cell: string): Promise<Lookup> => {
   return { status: response.status(), url: body.data?.url };
 };
 
+/** Match a save request for an article, such as the autosave plugin's. */
+const isArticleSave = (request: Request): boolean =>
+  request.method() === "PUT" && request.url().includes(ARTICLE_API);
+
 /**
- * Fail each test if the plugin reports a broken Strapi assumption.
+ * Fail each test if a plugin reports a broken Strapi assumption.
  */
 const test = base.extend<{ pluginWarnings: string[] }>({
   pluginWarnings: [
     async ({ page }, use) => {
       const warnings: string[] = [];
       page.on("console", (message) => {
-        if (message.text().startsWith(PLUGIN_PREFIX)) {
+        if (
+          PLUGIN_PREFIXES.some((prefix) => message.text().startsWith(prefix))
+        ) {
           warnings.push(message.text());
         }
       });
@@ -106,12 +115,14 @@ const test = base.extend<{ pluginWarnings: string[] }>({
 export {
   ABOUT_EDIT_VIEW,
   adminWidth,
+  ARTICLE_API,
   ARTICLES,
   BELOW_DESKTOP,
   expect,
   frame,
   frameContent,
   HOME_EDIT_VIEW,
+  isArticleSave,
   NARROW,
   openArticle,
   openEditView,

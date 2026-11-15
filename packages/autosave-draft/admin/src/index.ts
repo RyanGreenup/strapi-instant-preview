@@ -9,6 +9,10 @@ const translations = import.meta.glob<Record<string, string>>(
   { import: "default" },
 );
 
+const isSidePanelAdder = (
+  value: unknown,
+): value is (panels: unknown[]) => void => typeof value === "function";
+
 const plugin: StrapiApp["appPlugins"][string] = {
   register(app) {
     app.registerPlugin({
@@ -18,11 +22,18 @@ const plugin: StrapiApp["appPlugins"][string] = {
   },
 
   bootstrap(app) {
-    const contentManager = app.getPlugin("content-manager");
-    const apis = contentManager.apis as {
-      addEditViewSidePanel: (panels: unknown[]) => void;
-    };
-    apis.addEditViewSidePanel([AutosavePanel]);
+    // Disable only autosave if Strapi changes its side-panel registration API.
+    const contentManager: { apis?: Record<string, unknown> } | undefined =
+      app.getPlugin("content-manager");
+    const addEditViewSidePanel = contentManager?.apis?.["addEditViewSidePanel"];
+    if (!isSidePanelAdder(addEditViewSidePanel)) {
+      // oxlint-disable-next-line no-console -- The admin has no plugin logger.
+      console.warn(
+        `${PLUGIN_ID}: Content Manager does not expose addEditViewSidePanel; autosave is disabled`,
+      );
+      return;
+    }
+    addEditViewSidePanel([AutosavePanel]);
   },
 
   async registerTrads({ locales }) {
