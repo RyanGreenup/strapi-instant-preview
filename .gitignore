@@ -41,3 +41,4 @@ apps/strapi-instant-preview-example/.strapi-updater.json
 apps/strapi-instant-preview-example/.tmp/data.db
 .codemap
 .serena
+apps/strapi-instant-preview-example/public
