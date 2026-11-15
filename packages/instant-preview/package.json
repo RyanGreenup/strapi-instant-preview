@@ -5,46 +5,49 @@
   "exports": {
     "./package.json": "./package.json",
     "./strapi-admin": {
-      "types": "./dist/admin/src/index.d.ts",
+      "types": "./dist/admin/index.d.ts",
       "source": "./admin/src/index.ts",
       "import": "./dist/admin/index.mjs",
       "require": "./dist/admin/index.js",
       "default": "./dist/admin/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "strapi-plugin build",
-    "watch": "strapi-plugin watch",
+    "build": "tsdown",
+    "watch": "tsdown --watch",
     "watch:link": "strapi-plugin watch:link",
     "verify": "strapi-plugin verify",
     "test:ts:front": "tsc -p admin/tsconfig.json"
   },
   "dependencies": {},
   "devDependencies": {
-    "@strapi/strapi": "^5.62.0",
-    "@strapi/sdk-plugin": "^6.1.1",
-    "prettier": "^3.10.1",
     "@strapi/design-system": "^2.3.1",
     "@strapi/icons": "^2.3.1",
-    "react-intl": "^6.8.9",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.6",
-    "styled-components": "^6.6.0",
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "^5.62.0",
+    "@strapi/typescript-utils": "^5.62.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
-    "@strapi/typescript-utils": "^5.62.0",
+    "prettier": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-intl": "^6.8.9",
+    "react-router-dom": "^6.30.6",
+    "styled-components": "^6.6.0",
+    "tsdown": "^0.23.7",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@strapi/strapi": "^5.62.0",
-    "@strapi/sdk-plugin": "^6.1.1",
     "@strapi/design-system": "^2.3.1",
     "@strapi/icons": "^2.3.1",
-    "react-intl": "^6.8.9",
+    "@strapi/sdk-plugin": "^6.1.1",
+    "@strapi/strapi": "^5.62.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-intl": "^6.8.9",
     "react-router-dom": "^6.30.6",
     "styled-components": "^6.6.0"
   },
