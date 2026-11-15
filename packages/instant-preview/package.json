@@ -1,5 +1,6 @@
 {
-  "version": "0.0.0",
+  "name": "@rs/strapi-instant-preview",
+  "version": "0.0.1",
   "keywords": [],
   "type": "commonjs",
   "exports": {
@@ -53,7 +54,6 @@
   },
   "strapi": {
     "kind": "plugin",
-    "name": "instant-preview",
     "displayName": "Instant Preview",
     "description": "Instantly preview a draft in a split by autosaving"
   },
