@@ -1,7 +1,3 @@
-import type { AddressInfo } from "node:net";
-
-import { once } from "node:events";
-import { createServer } from "node:http";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -34,20 +30,6 @@ describe("autosave draft requests", () => {
     "autosave $scenario in the draft request",
     async ({ nested, expectedNested }) => {
       let body: unknown = null;
-      const server = createServer((request, response) => {
-        let data = "";
-        request.on("data", (chunk) => {
-          data += String(chunk);
-        });
-        request.on("end", () => {
-          body = JSON.parse(data);
-          response.end("{}");
-        });
-      });
-      const listening = once(server, "listening");
-      server.listen(0, "127.0.0.1");
-      await listening;
-      const address = server.address() as AddressInfo;
       const values = {
         title: "Edited",
         showDetails: false,
@@ -92,15 +74,10 @@ describe("autosave draft requests", () => {
         validate: () => Promise.resolve({}),
         refetch: noop,
         key: "conditional-regression",
-        saveDraft: ({ data }: { data: unknown }) => ({
-          unwrap: async () => {
-            await fetch(`http://127.0.0.1:${address.port}`, {
-              method: "PUT",
-              body: JSON.stringify(data),
-            });
-            return { didUpdateCache: true };
-          },
-        }),
+        saveDraft: ({ data }: { data: unknown }) => {
+          body = data;
+          return { unwrap: () => Promise.resolve({ didUpdateCache: true }) };
+        },
       } as unknown as AutosaveContext;
       const controller: AutosaveController = {
         latest: { current: context },
@@ -131,9 +108,6 @@ describe("autosave draft requests", () => {
         });
       } finally {
         clearTimeout(controller.awaitingReload.current?.timeout);
-        const closed = once(server, "close");
-        server.close();
-        await closed;
       }
     },
   );

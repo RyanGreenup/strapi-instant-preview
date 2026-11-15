@@ -131,7 +131,8 @@ const useAutosaveContext = (
   const [saveDraft] = useSaveDraftMutation();
   const canUpdate = useDocumentRBAC(FORM_CONSUMER, (rbac) => rbac.canUpdate);
   const { hasDraftAndPublish } = document;
-  const isSavedEntry = Boolean(target.document?.documentId);
+  // Match Strapi's own check: a locale being created has no row id yet.
+  const isSavedEntry = Boolean(target.document?.id);
   const eligible =
     enabled &&
     hasDraftAndPublish &&

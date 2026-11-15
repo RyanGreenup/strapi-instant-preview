@@ -17,6 +17,8 @@ interface AutosaveTarget {
   documentId?: string;
   /** Absent for new entries and the clone route. */
   document?: {
+    /** Absent while a new locale is being created. */
+    id?: number | string;
     documentId?: string;
     locale?: string | null;
     status?: string;
