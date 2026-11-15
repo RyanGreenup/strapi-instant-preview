@@ -56,19 +56,27 @@ describe("vanillaExtractSolid oxlint preset behavioral enforcement", () => {
     const oxlintBin = join(packageRoot, "node_modules", ".bin", "oxlint");
 
     try {
-      const failResult = spawnSync(oxlintBin, ["-c", configFile, failingFile], {
-        cwd: testDir,
-        encoding: "utf8",
-      });
+      const failResult = spawnSync(
+        oxlintBin,
+        ["--format", "default", "-c", configFile, failingFile],
+        {
+          cwd: testDir,
+          encoding: "utf8",
+        },
+      );
       expect(failResult.status).toBe(1);
       expect(failResult.stdout + failResult.stderr).toContain(
         "Component styles must use @ryangreenup/contract vars/Sprinkles or @vanilla-extract/recipes.",
       );
 
-      const passResult = spawnSync(oxlintBin, ["-c", configFile, passingFile], {
-        cwd: testDir,
-        encoding: "utf8",
-      });
+      const passResult = spawnSync(
+        oxlintBin,
+        ["--format", "default", "-c", configFile, passingFile],
+        {
+          cwd: testDir,
+          encoding: "utf8",
+        },
+      );
       expect(passResult.status).toBe(0);
       expect(passResult.stdout + passResult.stderr).not.toContain(
         "Component styles must use @ryangreenup/contract",
