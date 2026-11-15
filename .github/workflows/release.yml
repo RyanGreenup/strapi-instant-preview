@@ -103,9 +103,16 @@ jobs:
           TARBALL: ${{ steps.pack.outputs.tarball }}
           DIST_TAG: ${{ steps.pkg.outputs.dist_tag }}
         run: |
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No OIDC token available. The job needs 'id-token: write'."
+            exit 1
+          fi
           # Trusted publishing needs npm 11.5.1 or later.
           npm install --global npm@11
-          npm publish "$TARBALL" --access public --provenance --tag "$DIST_TAG"
+          npm --version
+          # npm logs why a trusted-publishing token exchange failed only at
+          # verbose level; without it the error is a bare ENEEDAUTH.
+          npm publish "$TARBALL" --access public --provenance --tag "$DIST_TAG" --loglevel verbose
 
       - name: Create GitHub release
         env:

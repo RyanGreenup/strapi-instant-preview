@@ -5,6 +5,15 @@
   "keywords": [],
   "license": "MIT",
   "author": "Ryan Greenup <ryanxgreenup@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyanGreenup/strapi-instant-preview.git",
+    "directory": "packages/instant-preview"
+  },
+  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/instant-preview#readme",
+  "bugs": {
+    "url": "https://github.com/RyanGreenup/strapi-instant-preview/issues"
+  },
   "files": [
     "dist"
   ],
