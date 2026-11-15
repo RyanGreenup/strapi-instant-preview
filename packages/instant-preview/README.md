@@ -1,29 +1,76 @@
 # Strapi Instant Preview
 
-Live preview in the Strapi Content Manager, refreshed after saves or draft
-autosave.
+Live preview in the Strapi Content Manager, docked beside the edit form and
+refreshed after saves or draft autosave.
 
-## Host setup
+Requires Strapi 5.62 or later.
 
-Install `@rs/strapi-instant-preview` and its peer dependencies in the Strapi
-app, enable `"instant-preview": { enabled: true }` in `config/plugins.ts`, then
-rebuild the admin.
+## Install
 
-The dock works with any Strapi native `preview` configuration in
-`config/admin.ts`. A handler may return an absolute HTTP(S) URL or a path, which
-resolves against the admin. Unsaved documents, missing or unparseable URLs,
-unsupported URL schemes, and a failed first lookup will not show the
-live-preview panel.
+Install the plugin in the Strapi app:
 
-Signed, expiring preview links and the preview-page `iframe` bridge are in the
-optional [`@rs/strapi-preview-helpers`](../preview-helpers/README.md) package.
-Hosts with their own handler, cookies, or draft sessions don't need it.
+```sh
+npm install @rs/strapi-instant-preview
+```
+
+The plugin uses the Strapi admin's own copies of React, `react-intl`,
+`styled-components`, and the Strapi design system and icons. A standard Strapi 5
+app already has these. If your package manager warns about missing peer
+dependencies, install them:
+
+```sh
+npm install @strapi/design-system @strapi/icons react react-dom react-intl styled-components
+```
+
+Enable it in `config/plugins.ts`:
+
+```ts
+export default () => ({
+  "instant-preview": {
+    enabled: true,
+  },
+});
+```
+
+Then rebuild the admin (`npm run build`, or restart `npm run develop`).
+
+## Preview configuration
+
+The dock uses Strapi's native `preview` configuration in `config/admin.ts`. Any
+handler works. For example:
+
+```ts
+export default ({ env }) => ({
+  // ...
+  preview: {
+    enabled: true,
+    config: {
+      allowedOrigins: [env("CLIENT_URL")],
+      async handler(uid, { documentId, locale, status }) {
+        const params = new URLSearchParams({ uid, documentId, status });
+        if (locale) params.set("locale", locale);
+        return `${env("CLIENT_URL")}/preview?${params}`;
+      },
+    },
+  },
+});
+```
+
+A handler may return an absolute HTTP(S) URL or a path. A path resolves against
+the admin. The live-preview panel does not show for unsaved documents, missing
+or unparseable URLs, unsupported URL schemes, or a failed first lookup.
+
+The preview page must allow framing by the admin origin (for example, a
+`Content-Security-Policy: frame-ancestors` header that lists the admin URL).
+
+To refresh the preview while editors type, pair this plugin with
+[`@rs/strapi-draft-autosave`](https://www.npmjs.com/package/@rs/strapi-draft-autosave).
 
 ## Strapi assumptions
 
 Strapi has no public API for docking a pane beside the editor, so the plugin
-relies on these parts of the admin. Each assumption should gracefully degrades
-instead of breaking the admin
+relies on these parts of the admin. If an assumption fails, the plugin degrades
+gracefully instead of breaking the admin.
 
 | Assumption                                                                    | Failure Mode                                           |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -33,39 +80,6 @@ instead of breaking the admin
 | `useIsDesktop` reports when panels like the _Save_ button are beside the form | Follows Strapi, so the dock and the panels stay paired |
 | The edit view is a grid of two columns, panels last                           | Panels stay beside the form when the dock opens; warns |
 
-The canary in `apps/strapi-instant-preview-example/e2e` checks these against a
-Strapi build. Run it after every Strapi upgrade:
+Recheck the preview dock after every Strapi upgrade.
 
-```sh
-pnpm turbo run test:e2e --filter strapi-instant-preview-example
-```
-
-It signs in with `STRAPI_ADMIN_SEED_EMAIL` and `STRAPI_ADMIN_SEED_PASSWORD`, and
-skips when they are not set.
-
-## Build
-
-Run these commands from `packages/instant-preview`:
-
-```sh
-pnpm run build
-pnpm exec tsdown --watch
-```
-
-[tsdown] builds the `admin` entry into `dist/admin` as ESM (`index.mjs`) and
-CommonJS (`index.js`), with matching TypeScript declarations (`index.d.mts` and
-`index.d.ts`). Both the build and type check use the package's root
-`tsconfig.json`.
-
-Translation JSON files are discovered through `import.meta.glob` and included as
-lazy-loaded chunks.
-
-## Checks
-
-```sh
-pnpm run check-types
-pnpm run lint
-pnpm run test
-```
-
-[tsdown]: https://tsdown.dev/
+License: MIT.

@@ -1,52 +1,58 @@
 # Draft Autosave
 
 This plugin saves existing drafts while editors work in Strapi's Content
-Manager. It has browser-wide toggle, save status, and a per-tab revert snapshot.
-It doesn't add a menu page or publish content.
+Manager. It has a browser-wide toggle, save status, and a per-tab revert
+snapshot. It doesn't add a menu page or publish content.
 
-This allows server side rendered html to get a live preview, unlike the Strapi
-live preview plugin which relies on client side rendering. If you're using Astro
-islands, Tanstack Start, Svelte Kit, Next.js, Nuxt etc. it may be better to to
-pass the form content via `useForm` via an iframe channel. This plugin is for
-Astro where islands are not necessarily used throughout, previewing dynamic zone
-blocks in real time is important and getting a single source of truth for the
-cms data flow is valued.
+Because every change is saved to the draft, a server-rendered preview page can
+show the latest edits by fetching the draft from Strapi. This suits sites such
+as Astro, where islands are not used throughout, live previews of dynamic zone
+blocks matter, and the CMS API stays the single source of truth. If your
+frontend renders on the client (Next.js, Nuxt, SvelteKit, TanStack Start, or
+Astro islands), passing the unsaved form content to the preview through an
+`iframe` message channel may suit you better.
 
-## Setup
+Requires Strapi 5.62 or later, with Draft & Publish enabled on the content types
+you want to autosave.
 
-Add this workspace package to the Strapi app's dependencies:
+## Install
 
-```json
-{
-  "@rs/strapi-draft-autosave": "workspace:*"
-}
+Install the plugin in the Strapi app:
+
+```sh
+npm install @rs/strapi-draft-autosave
+```
+
+The plugin uses the Strapi admin's own copies of React, `react-intl`,
+`styled-components`, the Strapi design system, and the Content Manager. A
+standard Strapi 5 app already has these. If your package manager warns about
+missing peer dependencies, install them:
+
+```sh
+npm install @strapi/content-manager @strapi/design-system react react-dom react-intl styled-components
 ```
 
 Enable it in `config/plugins.ts`:
 
 ```ts
-"draft-autosave": {
-  enabled: true,
-  config: {
-    debounceMs: env.int("DRAFT_AUTOSAVE_DEBOUNCE_MS", 500),
+export default ({ env }) => ({
+  "draft-autosave": {
+    enabled: true,
+    config: {
+      debounceMs: env.int("DRAFT_AUTOSAVE_DEBOUNCE_MS", 500),
+    },
   },
-},
+});
 ```
 
-The delay defaults to 500 milliseconds > 100 ms. The authenticated
-`GET /draft-autosave/config` endpoint supplies it to the admin panel.
+Then rebuild the admin (`npm run build`, or restart `npm run develop`).
 
-The [example app](../../apps/strapi-instant-preview-example/) enables the plugin
-as an example.
+`debounceMs` is the quiet period after a form change before the draft saves. It
+defaults to 500 and must be at least 100. The admin panel reads it from the
+authenticated `GET /draft-autosave/config` endpoint.
 
-From the repository root:
-
-```sh
-pnpm install
-pnpm --dir packages/autosave-draft build
-pnpm --dir packages/strapi-admin-seed-plugin build
-mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
-```
+To show the saved draft beside the editor, pair this plugin with
+[`@rs/strapi-instant-preview`](https://www.npmjs.com/package/@rs/strapi-instant-preview).
 
 ## Behavior
 
@@ -57,8 +63,8 @@ mise exec -- pnpm --dir apps/strapi-instant-preview-example develop
   relations, and media pickers.
 - Saves use Content Manager's update route without a notification toast.
 - Request data follows Save's relation conversion and conditional-field
-  filtering, including nested components and dynamic zones, hidden fields are
-  omitted and backend-managed `visible: false` fields are preserved.
+  filtering, including nested components and dynamic zones. Hidden fields are
+  omitted, and backend-managed `visible: false` fields are preserved.
 - Existing non-default-locale updates keep shared fields, as Strapi Save does.
 
 ### Revert
@@ -73,16 +79,7 @@ current top-level media and relations. Within components, media is restored and
 existing instances retain their current relation state. Recreating a deleted
 component does not restore its relation links.
 
-## Checks and compatibility
-
-Run from this package:
-
-```sh
-pnpm run build
-pnpm run check-types
-pnpm run lint
-pnpm run test
-```
+## Compatibility
 
 Verified against Strapi 5.62. The plugin uses Content Manager's public
 `buildValidParams` export to share the edit view's query parameters and cached

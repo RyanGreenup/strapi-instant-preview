@@ -19,6 +19,9 @@
       "default": "./dist/admin/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "check-types": "tsgo --skipLibCheck --noEmit",
