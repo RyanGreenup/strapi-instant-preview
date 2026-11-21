@@ -1,0 +1,532 @@
+import type {
+  CallOptions,
+  HTTPStatusCode2xx,
+} from "./generated/runtime.js";
+
+const BODY_PREVIEW_LENGTH = 200;
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+////////////////////////////////////////////////////////////
+// Result //////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+/** Result enum, like Rust. */
+type Result<T, E> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: E };
+
+/** Success variant containing the value. */
+const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
+
+/** Error variant containing the error. */
+const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
+
+////////////////////////////////////////////////////////////
+// Errors //////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+interface RequestContext {
+  readonly url: string;
+  readonly method: string;
+}
+
+/**
+ * Base class of every error a bound operation can return.
+ *
+ * Each is a real `Error` with a stack trace from the failure site, the
+ * original exception as `cause`, and a `toJSON()` for structured logging.
+ */
+abstract class CmsErrorBase extends Error {
+  /** Discriminant: `switch (error.kind)` narrows to the concrete class. */
+  public abstract readonly kind: string;
+  public readonly url: string;
+  public readonly method: string;
+
+  protected constructor(
+    summary: string,
+    context: RequestContext,
+    cause?: unknown,
+  ) {
+    super(
+      `${summary} (${context.method} ${context.url})`,
+      cause === undefined ? undefined : { cause },
+    );
+    this.name = new.target.name;
+    this.url = context.url;
+    this.method = context.method;
+  }
+
+  /** Plain-object form for logging. `JSON.stringify(error)` uses it. */
+  public toJSON(): Record<string, unknown> {
+    return {
+      name: this.name,
+      kind: this.kind,
+      message: this.message,
+      url: this.url,
+      method: this.method,
+      stack: this.stack,
+      cause: describeCause(this.cause),
+    };
+  }
+}
+
+/** The request could not be built, e.g. a bad path or an unencodable body. */
+class InvalidRequestError extends CmsErrorBase {
+  public readonly kind = "invalid-request";
+  public constructor(context: RequestContext, cause: unknown) {
+    super(`Could not build request: ${messageOf(cause)}`, context, cause);
+  }
+}
+
+/** No response arrived, e.g. DNS failure, refused connection, CORS. */
+class NetworkError extends CmsErrorBase {
+  public readonly kind = "network";
+  public constructor(context: RequestContext, cause: unknown) {
+    super(`Network error: ${messageOf(cause)}`, context, cause);
+  }
+}
+
+/** The timeout elapsed before the response (headers or body) finished. */
+class FetchTimeoutError extends CmsErrorBase {
+  public readonly kind = "timeout";
+  public constructor(context: RequestContext, cause: unknown) {
+    super("Request timed out", context, cause);
+  }
+}
+
+/** The caller's `signal` aborted the request. */
+class FetchAbortedError extends CmsErrorBase {
+  public readonly kind = "aborted";
+  public constructor(context: RequestContext, cause: unknown) {
+    super("Request was aborted", context, cause);
+  }
+}
+
+/**
+ * The server responded with a non-2xx status. `data` is the parsed body,
+ * typed by the contract for that status: check `status` to narrow it.
+ */
+class HttpError<
+  Status extends number = number,
+  Data = unknown,
+> extends CmsErrorBase {
+  public readonly kind = "http";
+  public readonly status: Status;
+  public readonly statusText: string;
+  public readonly data: Data;
+  public readonly headers: Headers;
+
+  public constructor(
+    context: RequestContext,
+    response: { status: Status; data: Data; headers: Headers },
+    statusText: string,
+  ) {
+    const preview = bodyPreview(response.data);
+    super(
+      `HTTP ${response.status} ${statusText}${preview ? `: ${preview}` : ""}`,
+      context,
+    );
+    this.status = response.status;
+    this.statusText = statusText;
+    this.data = response.data;
+    this.headers = response.headers;
+  }
+
+  public override toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      status: this.status,
+      bodyPreview: bodyPreview(this.data),
+    };
+  }
+}
+
+/** The response said it was JSON, but its body did not parse. */
+class JsonParseError extends CmsErrorBase {
+  public readonly kind = "json-parse";
+  public readonly status: number | undefined;
+
+  public constructor(
+    context: RequestContext,
+    status: number | undefined,
+    cause: unknown,
+  ) {
+    super(`Response was not valid JSON: ${messageOf(cause)}`, context, cause);
+    this.status = status;
+  }
+
+  public override toJSON(): Record<string, unknown> {
+    return { ...super.toJSON(), status: this.status };
+  }
+}
+
+/** One problem found by response validation. Zod issues have this shape. */
+interface ValidationIssue {
+  readonly code?: string;
+  readonly message: string;
+  readonly path: readonly PropertyKey[];
+}
+
+/**
+ * A 2xx body that did not match the contract's schema. The validator's
+ * error (a `ZodError`) is the `cause`.
+ */
+class ValidationError extends CmsErrorBase {
+  public readonly kind = "validation";
+  public readonly status: number;
+  public readonly issues: readonly ValidationIssue[];
+  /** The payload that failed validation, for inspecting in a debugger. */
+  public readonly received: unknown;
+
+  public constructor(
+    context: RequestContext,
+    status: number,
+    error: { message: string; issues: readonly ValidationIssue[] },
+    received: unknown,
+  ) {
+    super(`Response failed validation: ${error.message}`, context, error);
+    this.status = status;
+    this.issues = error.issues;
+    this.received = received;
+  }
+
+  public override toJSON(): Record<string, unknown> {
+    return { ...super.toJSON(), status: this.status, issues: this.issues };
+  }
+}
+
+/** Something outside the cases above threw. */
+class UnexpectedError extends CmsErrorBase {
+  public readonly kind = "unexpected";
+  public constructor(context: RequestContext, cause: unknown) {
+    super(`Unexpected failure: ${messageOf(cause)}`, context, cause);
+  }
+}
+
+function messageOf(value: unknown): string {
+  return value instanceof Error ? value.message : String(value);
+}
+
+function describeCause(cause: unknown): unknown {
+  if (cause === undefined) return undefined;
+  if (cause instanceof Error) {
+    return { name: cause.name, message: cause.message, stack: cause.stack };
+  }
+  return String(cause);
+}
+
+function bodyPreview(data: unknown): string {
+  if (data === undefined || data === null) return "";
+  const text = typeof data === "string" ? data : JSON.stringify(data);
+  return (text ?? "").slice(0, BODY_PREVIEW_LENGTH);
+}
+
+/** Classify a rejection from `fetch()` or from reading the body. */
+function transportError(
+  context: RequestContext,
+  signal: AbortSignal | null | undefined,
+  cause: unknown,
+): NetworkError | FetchTimeoutError | FetchAbortedError {
+  const name = cause instanceof Error ? cause.name : undefined;
+  if (name === "TimeoutError") return new FetchTimeoutError(context, cause);
+  if (name === "AbortError" || signal?.aborted) {
+    return new FetchAbortedError(context, cause);
+  }
+  return new NetworkError(context, cause);
+}
+
+////////////////////////////////////////////////////////////
+// Client //////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+/**
+ * Any CMS operation, such as `getArticles`. The helper types below take one
+ * as `typeof getArticles`.
+ */
+type CmsOperation = (
+  ...args: never[]
+) => Promise<{ status: number; data: unknown; headers: Headers }>;
+
+/** The response union of one operation, over every documented status. */
+type CmsResponse<Op extends CmsOperation> = Awaited<ReturnType<Op>>;
+
+/** The 2xx responses of one operation: the `value` of a successful call. */
+type CmsSuccess<Op extends CmsOperation> = Extract<
+  CmsResponse<Op>,
+  { status: HTTPStatusCode2xx }
+>;
+
+/** One `HttpError` per documented error status, so `status` narrows `data`. */
+type CmsHttpError<Op extends CmsOperation> =
+  Exclude<CmsResponse<Op>, { status: HTTPStatusCode2xx }> extends infer R
+    ? R extends { status: infer S extends number; data: infer D }
+      ? HttpError<S, D>
+      : never
+    : never;
+
+/**
+ * Every error a bound operation can return. Narrow it with `error.kind`,
+ * then with `error.status` for `"http"`.
+ */
+type CmsError<Op extends CmsOperation> =
+  | CmsHttpError<Op>
+  | InvalidRequestError
+  | NetworkError
+  | FetchTimeoutError
+  | FetchAbortedError
+  | JsonParseError
+  | ValidationError
+  | UnexpectedError;
+
+/**
+ * The body of one CMS operation's response for a given status, for example
+ * `CmsData<typeof getArticles>` or `CmsData<typeof getArticles, 401>`.
+ */
+type CmsData<
+  Op extends CmsOperation,
+  Status extends CmsResponse<Op>["status"] = 200,
+> = Extract<CmsResponse<Op>, { status: Status }>["data"];
+
+/** Checks a body for one status. `undefined` means no schema to check. */
+type Validator = (
+  status: number,
+  data: unknown,
+) =>
+  | { success: true; data: unknown }
+  | {
+      success: false;
+      error: { message: string; issues: readonly ValidationIssue[] };
+    }
+  | undefined;
+
+/** Where validated operations keep their {@link Validator}. */
+const validatorKey = Symbol.for("cms-client.validator");
+
+/**
+ * A configured CMS connection. Pass it to {@link bindClient}, or as the
+ * last argument of a raw operation.
+ *
+ * Spread it to add per-call options, such as `{ ...client, signal }`. A
+ * `fetch` set that way replaces the client's own for that call: it then gets
+ * the bare operation path, with no base URL, token or timeout.
+ */
+type CmsClient = CallOptions & { fetch: typeof globalThis.fetch };
+
+/** Each client fetch's base URL, so errors can name the full URL. */
+const baseUrls = new WeakMap<typeof globalThis.fetch, string>();
+
+/**
+ * Create a CMS client for one server and, optionally, one token. Each client
+ * keeps its own settings, so several can run side by side.
+ *
+ * @param options - Where to send requests, and how to authenticate them.
+ * @returns The client, to pass to {@link bindClient}.
+ */
+const createCmsClient = (options: {
+  /**
+   * The API root, including any path prefix, for example
+   * `https://cms.example.com/api`. Operation paths are appended to it.
+   */
+  baseUrl: string | URL;
+  /** A bearer token. It is sent unless a call sets its own `Authorization`. */
+  token?: string;
+  /**
+   * Abort each request after this many milliseconds (default 10s). A
+   * caller's `signal` still applies as well.
+   */
+  timeoutMs?: number;
+  /** The `fetch` to send requests with. Defaults to the global `fetch`. */
+  fetch?: typeof globalThis.fetch;
+}): CmsClient => {
+  let baseUrl = String(options.baseUrl);
+  while (baseUrl.endsWith("/")) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
+  const send = options.fetch ?? globalThis.fetch;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+  const fetch: typeof globalThis.fetch = (input, init) => {
+    if (typeof input !== "string" || !input.startsWith("/")) {
+      throw new InvalidRequestError(
+        { url: String(input), method: init?.method ?? "GET" },
+        new TypeError("Expected a CMS operation path starting with /"),
+      );
+    }
+    const headers = new Headers(init?.headers);
+    if (!headers.has("accept")) {
+      headers.set("accept", "application/json");
+    }
+    if (options.token !== undefined && !headers.has("authorization")) {
+      headers.set("authorization", `Bearer ${options.token}`);
+    }
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = init?.signal
+      ? AbortSignal.any([init.signal, timeout])
+      : timeout;
+    return send(`${baseUrl}${input}`, { ...init, headers, signal });
+  };
+  baseUrls.set(fetch, baseUrl);
+
+  return { fetch };
+};
+
+/**
+ * Operations bound by {@link bindClient}: same parameters, but each call
+ * resolves to a `Result` and never throws or rejects.
+ */
+type BoundOperations<Operations extends Record<string, CmsOperation>> = {
+  [K in keyof Operations]: (
+    ...args: Parameters<Operations[K]>
+  ) => Promise<
+    Result<CmsSuccess<Operations[K]>, CmsError<Operations[K]>>
+  >;
+};
+
+/**
+ * Bind operations to a client, so they can be called as methods:
+ *
+ * ```ts
+ * import { bindClient, createCmsClient, getArticles } from "./cms-client/index.js";
+ *
+ * const cms = bindClient(createCmsClient({ baseUrl }), { getArticles });
+ * const result = await cms.getArticles({ pagination: { page: 1 } });
+ * if (!result.ok) {
+ *   switch (result.error.kind) {
+ *     case "http":
+ *       if (result.error.status === 401) return login(); // error.data: StrapiError401
+ *       break;
+ *     case "validation":
+ *       console.error(result.error.issues);
+ *       break;
+ *   }
+ *   throw result.error; // message, stack and cause chain
+ * }
+ * result.value.data; // the 2xx body
+ * ```
+ *
+ * Operations imported from `index.js` check 2xx bodies against the
+ * contract with zod. Import them from `unchecked.js` instead to skip that:
+ * zod is then left out of the bundle.
+ *
+ * Pass only the operations you use: bundlers keep exactly those. Options
+ * given in a call are merged over the client's.
+ *
+ * @param client - The client from {@link createCmsClient}.
+ * @param operations - The operations to bind, keyed by the method names to
+ *   give them.
+ * @returns The bound operations.
+ */
+const bindClient = <Operations extends Record<string, CmsOperation>>(
+  client: CmsClient,
+  operations: Operations,
+): BoundOperations<Operations> =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  Object.fromEntries(
+    Object.entries(operations).map(([name, operation]) => [
+      name,
+      (...args: unknown[]) => call(client, operation, args),
+    ]),
+  ) as unknown as BoundOperations<Operations>;
+
+async function call(
+  client: CmsClient,
+  operation: CmsOperation,
+  args: unknown[],
+): Promise<Result<unknown, unknown>> {
+  // Orval emits an optional trailing CallOptions parameter.
+  const slot = Math.max(operation.length - 1, 0);
+  const given = args[slot];
+  const options: CallOptions = {
+    ...client,
+    ...(typeof given === "object" && given !== null ? given : {}),
+  };
+
+  // Record what was sent, so every error can name the request.
+  const send = options.fetch ?? globalThis.fetch;
+  let context: RequestContext = { url: "", method: "GET" };
+  let sent = false;
+  let signal: AbortSignal | null | undefined;
+  let statusText = "";
+  let status: number | undefined;
+  options.fetch = async (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    context = {
+      url: url.startsWith("/") ? `${baseUrls.get(send) ?? ""}${url}` : url,
+      method: (init?.method ?? "GET").toUpperCase(),
+    };
+    signal = init?.signal;
+    sent = true;
+    const response = await send(input, init);
+    context = { ...context, url: response.url || context.url };
+    statusText = response.statusText;
+    status = response.status;
+    return response;
+  };
+
+  const callArgs = Array.from({ length: slot }, (_, index) => args[index]);
+  callArgs.push(options);
+
+  let response: Awaited<ReturnType<CmsOperation>>;
+  try {
+    response = await Reflect.apply(operation, undefined, callArgs);
+  } catch (cause) {
+    if (cause instanceof CmsErrorBase) return err(cause);
+    // Orval builds the URL and body before calling fetch.
+    if (!sent) return err(new InvalidRequestError(context, cause));
+    if (cause instanceof SyntaxError) {
+      return err(new JsonParseError(context, status, cause));
+    }
+    return err(transportError(context, signal, cause));
+  }
+
+  if (response.status < 200 || response.status > 299) {
+    return err(new HttpError(context, response, statusText));
+  }
+
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const validate = (operation as { [validatorKey]?: Validator })[validatorKey];
+  if (validate === undefined) return ok(response);
+  try {
+    const checked = validate(response.status, response.data);
+    if (checked === undefined) return ok(response);
+    return checked.success
+      ? ok({ ...response, data: checked.data })
+      : err(
+          new ValidationError(
+            context,
+            response.status,
+            checked.error,
+            response.data,
+          ),
+        );
+  } catch (cause) {
+    return err(new UnexpectedError(context, cause));
+  }
+}
+
+export {
+  bindClient,
+  CmsErrorBase,
+  createCmsClient,
+  err,
+  FetchAbortedError,
+  FetchTimeoutError,
+  HttpError,
+  InvalidRequestError,
+  JsonParseError,
+  NetworkError,
+  ok,
+  UnexpectedError,
+  ValidationError,
+  validatorKey,
+  type BoundOperations,
+  type CmsClient,
+  type CmsData,
+  type CmsError,
+  type CmsOperation,
+  type CmsResponse,
+  type CmsSuccess,
+  type Result,
+  type ValidationIssue,
+  type Validator,
+};

@@ -1,6 +1,6 @@
 {
   "name": "@ryangreenup/strapi-typed-openapi-spec",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "private": false,
   "description": "Generate OpenAPI Spec and API client for Strapi REST API",
   "keywords": [],
@@ -54,7 +54,7 @@
     "lint": "oxlint -c oxlint.config.mts --type-aware --type-check . && oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
     "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .",
     "fix": "oxlint -c oxlint.config.mts --fix --fix-suggestions --type-aware --type-check .",
-    "test": "vitest run tests/unit && node --test --test-concurrency=1 tests/api.test.cjs tests/query.test.cjs tests/spec.test.cjs",
+    "test": "vitest run tests/unit && vitest run --pool=threads tests/client && node --test --test-concurrency=1 tests/api.test.cjs tests/query.test.cjs tests/spec.test.cjs",
     "test:fuzz": "node --test --test-concurrency=1 tests/fuzz.test.cjs"
   },
   "dependencies": {

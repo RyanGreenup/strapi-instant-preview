@@ -108,7 +108,8 @@ const client = defineCommand({
       config: args.config,
     });
     const output = resolve(args.out);
-    await generateClient(document, output);
+    const warnings = await generateClient(document, output);
+    for (const warning of warnings) console.warn(warning);
     console.log(`Wrote client to ${output}`);
   },
 });

@@ -1,0 +1,34 @@
+import { fromJSONSchema, type ZodType } from "zod";
+
+import { type CmsOperation, type Validator, validatorKey } from "./client.js";
+import { $defs } from "./generated/schemas.js";
+
+type JsonSchema = Exclude<Parameters<typeof fromJSONSchema>[0], boolean>;
+
+/**
+ * Give an operation the contract's JSON Schemas for its 2xx bodies, keyed by
+ * status. Returns a copy: the operation itself stays unchecked.
+ *
+ * Zod schemas are built from the JSON Schemas on first use, then reused.
+ */
+export const withSchemas = <Op extends CmsOperation>(
+  operation: Op,
+  schemas: Readonly<Record<number, JsonSchema>>,
+): Op => {
+  const built = new Map<number, ZodType>();
+  const validate: Validator = (status, data) => {
+    const json = schemas[status];
+    if (json === undefined) return undefined;
+    let schema = built.get(status);
+    if (schema === undefined) {
+      schema = fromJSONSchema({ ...json, $defs });
+      built.set(status, schema);
+    }
+    return schema.safeParse(data);
+  };
+  // `bind` keeps `length`, which `bindClient` uses to find the options slot.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return Object.assign(operation.bind(undefined), {
+    [validatorKey]: validate,
+  }) as unknown as Op;
+};

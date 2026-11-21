@@ -6,3 +6,6 @@ tests/fixture-app/public/uploads/*
 !tests/fixture-app/public/uploads/.gitkeep
 !tests/fixture-app/public/uploads/cover_a0e8ec5a47.txt
 tests/.fuzz/
+
+# Generated clients from tests
+tests/.tmp/

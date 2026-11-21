@@ -1,124 +1,18 @@
-import type { CallOptions } from "./generated/runtime.js";
-
 /**
- * Any CMS operation, such as `getArticles`. The helper types below take one
- * as `typeof getArticles`.
- */
-type CmsOperation = (
-  ...args: never[]
-) => Promise<{ status: number; data: unknown }>;
-
-/**
- * The body of one CMS operation's response for a given status, for example
- * `CmsData<typeof getArticles>` or `CmsData<typeof getArticles, 401>`.
- */
-type CmsData<
-  Op extends CmsOperation,
-  Status extends Awaited<ReturnType<Op>>["status"] = 200,
-> = Extract<Awaited<ReturnType<Op>>, { status: Status }>["data"];
-
-/**
- * A configured CMS connection. Pass it as the last argument of any
- * operation:
+ * The CMS client. Operations from here check 2xx bodies against the
+ * contract with zod when called through `bindClient`:
  *
  * ```ts
- * import * as cms from "./cms-client/index.js";
+ * import { bindClient, createCmsClient, getArticles } from "./cms-client/index.js";
  *
- * const client = cms.createCmsClient({ baseUrl: "https://cms.example.com/api" });
- * const res = await cms.getArticles({ pagination: { page: 1 } }, client);
+ * const cms = bindClient(createCmsClient({ baseUrl, token }), { getArticles });
+ * const result = await cms.getArticles({ pagination: { page: 1 } });
  * ```
  *
- * Operations resolve to `{ data, status, headers }` and do not throw on an
- * error status: check `status` first, which narrows `data` to that status's
- * body.
- *
- * Spread it to add per-call options, such as `{ ...client, signal }`. A
- * `fetch` set that way replaces the client's own for that call: it then gets
- * the bare operation path, with no base URL or token.
+ * To skip validation and leave zod out of the bundle, import the same names
+ * from `./cms-client/unchecked.js` instead.
  */
-type CmsClient = CallOptions & { fetch: typeof globalThis.fetch };
-
-/**
- * Create a CMS client for one server and, optionally, one token. Each client
- * keeps its own settings, so several can run side by side.
- *
- * @param options - Where to send requests, and how to authenticate them.
- * @returns The client, to pass as the last argument of each operation.
- */
-const createCmsClient = (options: {
-  /**
-   * The API root, including any path prefix, for example
-   * `https://cms.example.com/api`. Operation paths are appended to it.
-   */
-  baseUrl: string | URL;
-  /** A bearer token. It is sent unless a call sets its own `Authorization`. */
-  token?: string;
-  /** The `fetch` to send requests with. Defaults to the global `fetch`. */
-  fetch?: typeof globalThis.fetch;
-}): CmsClient => {
-  let baseUrl = String(options.baseUrl);
-  while (baseUrl.endsWith("/")) {
-    baseUrl = baseUrl.slice(0, -1);
-  }
-  const send = options.fetch ?? globalThis.fetch;
-
-  const fetch: typeof globalThis.fetch = (input, init) => {
-    if (typeof input !== "string" || !input.startsWith("/")) {
-      throw new TypeError("Expected a CMS operation path starting with /");
-    }
-    const headers = new Headers(init?.headers);
-    if (options.token !== undefined && !headers.has("authorization")) {
-      headers.set("authorization", `Bearer ${options.token}`);
-    }
-    return send(`${baseUrl}${input}`, { ...init, headers });
-  };
-
-  return { fetch };
-};
-
-/**
- * Bind operations to a client, so they can be called as methods without
- * passing the client each time:
- *
- * ```ts
- * const cms = bindClient(client, { getArticles, getArticlesId });
- * await cms.getArticles({ pagination: { page: 1 } });
- * await cms.getArticlesId("a1");
- * ```
- *
- * Pass only the operations you use: bundlers keep exactly those. Each method
- * keeps its operation's signature; options given in a call are merged over
- * the client's.
- *
- * @param client - The client from {@link createCmsClient}.
- * @param operations - The operations to bind, keyed by the method names to
- *   give them.
- * @returns The bound operations.
- */
-const bindClient = <Operations extends Record<string, CmsOperation>>(
-  client: CmsClient,
-  operations: Operations,
-): Operations =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  Object.fromEntries(
-    Object.entries(operations).map(([name, operation]) => {
-      // Orval emits an optional trailing CallOptions parameter.
-      const slot = Math.max(operation.length - 1, 0);
-      const method = (...args: unknown[]): unknown => {
-        const options = args[slot];
-        const call = Array.from({ length: slot }, (_, index) => args[index]);
-        call.push({
-          ...client,
-          ...(typeof options === "object" ? options : {}),
-        });
-        return Reflect.apply(operation, undefined, call);
-      };
-      return [name, method];
-    }),
-  ) as unknown as Operations;
-
 // Each operation is its own export, so bundlers keep only the ones used.
 // oxlint-disable-next-line oxc/no-barrel-file
-export * from "./generated/cms.js";
-export type { CmsClient, CmsData, CmsOperation };
-export { bindClient, createCmsClient };
+export * from "./client.js";
+export * from "./generated/checked.js";

@@ -1,0 +1,8 @@
+/**
+ * The CMS client without response validation. It has the same exports as
+ * `index.js`, but nothing here imports zod, so bundlers leave it out.
+ */
+// Each operation is its own export, so bundlers keep only the ones used.
+// oxlint-disable-next-line oxc/no-barrel-file
+export * from "./client.js";
+export * from "./generated/cms.js";
