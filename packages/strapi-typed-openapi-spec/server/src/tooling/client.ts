@@ -85,107 +85,35 @@ function toContextRefs<T>(schema: T): T {
   ) as T;
 }
 
-const OPENING = { "(": ")", "[": "]", "{": "}", "<": ">" } as const;
-const CLOSING = new Set([")", "]", "}", ">"]);
-
-/**
- * The parameter lists of the arrow functions exported by `source`
- *
- * These are keyed by name e.g. `export const name = (a: A, b?: B) =>` gives
- * `["a: A", "b?: B"]`.
- *
- * Only the top level of each list is split, commas inside a parameter's type
- * (generics, object types, string literals) stay in that parameter.
- */
-export function exportedParameters(source: string): Map<string, string[]> {
-  const found = new Map<string, string[]>();
-  for (const match of source.matchAll(/^export const (\w+) = \(/gmu)) {
-    const [, name] = match;
-    if (name === undefined) continue;
-    const parameters: string[] = [];
-    const closers: string[] = [];
-    let current = "";
-    let quote: string | undefined;
-    for (let index = match.index + match[0].length; index < source.length;) {
-      const char = source.charAt(index);
-      if (quote !== undefined) {
-        current += char;
-        if (char === "\\") {
-          // Keep the escaped character, whatever it is.
-          current += source.charAt(index + 1);
-          index += 2;
-          continue;
-        }
-        if (char === quote) quote = undefined;
-        index += 1;
-        continue;
-      }
-      if (char === '"' || char === "'" || char === "`") {
-        quote = char;
-      } else if (char === "=" && source.charAt(index + 1) === ">") {
-        // The arrow of a function type, not a closing `>`.
-        current += "=>";
-        index += 2;
-        continue;
-      } else if (char in OPENING) {
-        closers.push(OPENING[char as keyof typeof OPENING]);
-      } else if (CLOSING.has(char)) {
-        if (closers.length === 0) {
-          if (char === ")") break;
-          throw new Error(`Cannot read the parameters of ${name}`);
-        }
-        closers.pop();
-      } else if (char === "," && closers.length === 0) {
-        parameters.push(current.trim());
-        current = "";
-        index += 1;
-        continue;
-      }
-      current += char;
-      index += 1;
-    }
-    parameters.push(current.trim());
-    found.set(
-      name,
-      parameters.filter((parameter) => parameter !== ""),
-    );
-  }
-  return found;
-}
-
-/**
- * The position of each operation's trailing `CallOptions` parameter, read
- * from the generated signatures. Throws if an operation has none, since
- * `bindClient` could then not pass the client's options.
- */
-export function optionsIndexes(
-  source: string,
-  names: readonly string[],
-): Map<string, number> {
-  const signatures = exportedParameters(source);
-  const indexes = new Map<string, number>();
-  for (const name of names) {
-    const parameters = signatures.get(name);
-    const last = parameters?.at(-1);
-    if (parameters === undefined || last === undefined) {
-      throw new Error(`Generated client has no function ${name}`);
-    }
-    if (!/^options\??\s*:\s*CallOptions$/u.test(last)) {
-      throw new Error(
-        `The last parameter of ${name} is \`${last}\`, not \`options?: CallOptions\``,
-      );
-    }
-    indexes.set(name, parameters.length - 1);
-  }
-  return indexes;
-}
-
 /** One operation in the contract, as the generated files name it. */
 interface Operation {
   readonly name: string;
   readonly method: string;
   readonly path: string;
+  /** The position of the trailing `CallOptions` parameter. */
+  readonly optionsIndex: number;
   readonly responses: OpenAPIDocument["paths"][string][string]["responses"];
+}
+
+type OperationObject = OpenAPIDocument["paths"][string][string];
+
+/**
+ * Where orval puts an operation's `CallOptions` parameter. Its fetch
+ * signatures take each path parameter in path order, then the request body,
+ * then one object of query parameters, then the options. The client test
+ * checks this against the generated functions.
+ */
+function optionsIndex(operation: OperationObject, label: string): number {
+  const parameters = operation.parameters ?? [];
+  const other = parameters.find((p) => p.in !== "path" && p.in !== "query");
+  if (other !== undefined) {
+    throw new Error(`${label}: ${other.in} parameters are not supported`);
+  }
+  return (
+    parameters.filter((p) => p.in === "path").length +
+    (operation.requestBody === undefined ? 0 : 1) +
+    (parameters.some((p) => p.in === "query") ? 1 : 0)
+  );
 }
 
 function operationsOf(document: OpenAPIDocument): Operation[] {
@@ -194,6 +122,7 @@ function operationsOf(document: OpenAPIDocument): Operation[] {
       name: operationName(operation.operationId),
       method: method.toUpperCase(),
       path,
+      optionsIndex: optionsIndex(operation, `${method.toUpperCase()} ${path}`),
       responses: operation.responses,
     })),
   );
@@ -201,19 +130,14 @@ function operationsOf(document: OpenAPIDocument): Operation[] {
 
 /**
  * Write `generated/operations.ts`: every operation, with the method, path
- * template and options position that `bindClient` reads. Reading the
- * position from the generated code, not from `Function.length`, keeps it
- * right whatever defaults the generator emits.
+ * template and options position that `bindClient` reads. The position comes
+ * from the contract, not from `Function.length`, which stops counting at a
+ * parameter with a default.
  */
 async function writeOperations(
   operations: readonly Operation[],
   generated: string,
 ): Promise<void> {
-  const source = await readFile(join(generated, "cms.ts"), "utf8");
-  const indexes = optionsIndexes(
-    source,
-    operations.map(({ name }) => name),
-  );
   const lines = [
     "// Operations with what `bindClient` needs to know about each one.",
     'import { describeOperation } from "../client.js";',
@@ -222,8 +146,8 @@ async function writeOperations(
     'export * from "./cms.js";',
     "",
   ];
-  for (const { name, method, path } of operations) {
-    const info = { method, path, optionsIndex: indexes.get(name) };
+  for (const { name, method, path, optionsIndex: index } of operations) {
+    const info = { method, path, optionsIndex: index };
     lines.push(
       `export const ${name} = /*#__PURE__*/ describeOperation(raw.${name}, ${JSON.stringify(info)});`,
     );

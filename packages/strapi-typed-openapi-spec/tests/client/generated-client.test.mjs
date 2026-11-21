@@ -204,7 +204,8 @@ test("each operation carries its method, path and options position", () => {
   expect(described.length).toBeGreaterThan(0);
   for (const [name, operation] of described) {
     const info = operation[key];
-    // Orval's signatures have no defaults today, so `length` agrees.
+    // The position comes from the contract. Orval emits no defaults, so
+    // `length` agrees; a mismatch means orval changed its parameter order.
     expect(info.optionsIndex, name).toBe(raw[name].length - 1);
     expect(info.method, name).toMatch(/^[A-Z]+$/u);
     expect(info.path, name).toMatch(/^\//u);

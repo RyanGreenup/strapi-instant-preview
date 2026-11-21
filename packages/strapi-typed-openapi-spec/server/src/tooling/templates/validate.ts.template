@@ -18,48 +18,16 @@ function pathOf(pointer: string): PropertyKey[] {
     .map((part) => (/^\d+$/u.test(part) ? Number(part) : part));
 }
 
-/** The component the contract uses for a relation sent as `{ count }`. */
-const RELATION_COUNT = "StrapiCount";
-
 /**
- * A copy of a schema in which no relation may be a count: each `anyOf`
- * loses its `StrapiCount` branch, and an `anyOf` left with one branch
- * becomes that branch.
+ * The component schemas, and the same with no relation counts allowed.
+ * Every relation refers to `StrapiCount` by name, so replacing it with
+ * `false` (matches nothing) rejects a count wherever one could appear.
  */
-function withoutCounts(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(withoutCounts);
-  if (node === null || typeof node !== "object") return node;
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(node)) {
-    out[key] =
-      key === "anyOf" && Array.isArray(value)
-        ? value
-            .filter(
-              (branch) =>
-                // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-                (branch as { $ref?: unknown } | null)?.$ref !== RELATION_COUNT,
-            )
-            .map(withoutCounts)
-        : withoutCounts(value);
-  }
-  const branches = out["anyOf"];
-  if (
-    Array.isArray(branches) &&
-    branches.length === 1 &&
-    Object.keys(out).length === 1
-  ) {
-    return branches[0];
-  }
-  return out;
-}
-
-/** The component schemas without counts, built on first use. */
-let populatedDefs: Record<string, object> | undefined;
-const definitions = (populated: boolean): Record<string, object> => {
-  if (!populated) return $defs;
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  populatedDefs ??= withoutCounts($defs) as Record<string, object>;
-  return populatedDefs;
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
+const definitions = $defs as Record<string, XSchema>;
+const populatedDefinitions: Record<string, XSchema> = {
+  ...definitions,
+  StrapiCount: false,
 };
 
 /**
@@ -82,10 +50,9 @@ export const withSchemas = <Op extends CmsOperation>(
     let validator = compiled.get(key);
     if (validator === undefined) {
       validator = Compile(
+        populated ? populatedDefinitions : definitions,
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        definitions(populated) as Record<string, XSchema>,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        (populated ? withoutCounts(schema) : schema) as XSchema,
+        schema as XSchema,
       );
       compiled.set(key, validator);
     }
