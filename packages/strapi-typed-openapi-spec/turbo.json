@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // The tests load the plugin from dist/ and boot the fixture app with it.
+      "dependsOn": ["$TURBO_EXTENDS$", "build"]
+    },
+    "test:fuzz": {
+      "dependsOn": ["^build", "build"],
+      "cache": false
+    }
+  }
+}

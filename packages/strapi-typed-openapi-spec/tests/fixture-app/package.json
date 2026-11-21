@@ -1,0 +1,32 @@
+{
+  "name": "openapi-contract-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Strapi OpenAPI contract integration fixture",
+  "scripts": {
+    "lint": "oxlint -c oxlint.config.mts . && oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .",
+    "fix": "oxlint -c oxlint.config.mts --fix --fix-suggestions ."
+  },
+  "dependencies": {
+    "@moworks/strapi-typed-openapi-spec": "workspace:*",
+    "@strapi/plugin-users-permissions": "catalog:",
+    "@strapi/strapi": "catalog:",
+    "better-sqlite3": "catalog:",
+    "pg": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "catalog:",
+    "@redocly/cli": "catalog:",
+    "@ryangreenup/oxlint-config": "workspace:*",
+    "@strapi/openapi": "catalog:",
+    "openapi-fetch": "catalog:",
+    "openapi-typescript": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "strapi": {
+    "telemetryDisabled": true
+  }
+}

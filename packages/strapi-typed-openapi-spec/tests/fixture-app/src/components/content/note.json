@@ -1,0 +1,8 @@
+{
+  "collectionName": "fixture_content_notes",
+  "info": { "displayName": "Note" },
+  "attributes": {
+    "message": { "type": "string", "required": true },
+    "passphrase": { "type": "password" }
+  }
+}

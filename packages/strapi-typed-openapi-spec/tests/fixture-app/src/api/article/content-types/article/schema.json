@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "fixture_articles",
+  "info": {
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "Article"
+  },
+  "options": { "draftAndPublish": true },
+  "pluginOptions": { "i18n": { "localized": true } },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "minLength": 3,
+      "maxLength": 80,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": { "type": "text" },
+    "legacyRichText": { "type": "richtext" },
+    "contact": { "type": "email" },
+    "slug": { "type": "uid", "targetField": "title" },
+    "category": {
+      "type": "enumeration",
+      "enum": ["news", "guide"],
+      "default": "news"
+    },
+    "quantity": { "type": "integer", "min": 0 },
+    "rating": { "type": "float" },
+    "price": { "type": "decimal" },
+    "hugeNumber": { "type": "biginteger" },
+    "featured": { "type": "boolean", "default": false },
+    "dueDate": { "type": "date" },
+    "scheduledAt": { "type": "datetime" },
+    "startsAt": { "type": "time" },
+    "settings": { "type": "json" },
+    "eventEpoch": { "type": "timestamp" },
+    "secret": { "type": "password" },
+    "body": {
+      "type": "blocks",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "cover": { "type": "media", "multiple": false, "allowedTypes": ["files"] },
+    "attachments": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["files"]
+    },
+    "topic": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::topic.topic"
+    },
+    "topics": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::topic.topic"
+    },
+    "relatedArticles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article"
+    },
+    "notes": {
+      "type": "component",
+      "repeatable": true,
+      "component": "content.note"
+    },
+    "sections": {
+      "type": "dynamiczone",
+      "components": ["content.note", "content.quote"]
+    },
+    "color": { "type": "customField", "customField": "global::fixture-color" }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "name": "@moworks/strapi-typed-openapi-spec",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Generate OpenAPI Spec for Strapi REST API",
+  "keywords": [],
+  "homepage": "https://github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin/issues"
+  },
+  "license": "GPL-3.0-only",
+  "author": "Ryan Greenup <exogenesis@protonmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin.git"
+  },
+  "bin": {
+    "openapi-contract": "./bin/openapi-contract.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./dist/server/src/library.d.ts",
+      "default": "./dist/server/src/library.js"
+    },
+    "./package.json": "./package.json",
+    "./strapi-server": {
+      "types": "./dist/server/src/index.d.ts",
+      "default": "./dist/server/src/index.js"
+    },
+    "./testing": {
+      "types": "./dist/server/src/testing/index.d.ts",
+      "default": "./dist/server/src/testing/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsgo --skipLibCheck --noEmit",
+    "lint": "oxlint -c oxlint.config.mts --type-aware --type-check . && oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --check .",
+    "format": "oxfmt -c node_modules/@ryangreenup/oxlint-config/oxfmt.json --write .",
+    "fix": "oxlint -c oxlint.config.mts --fix --fix-suggestions --type-aware --type-check .",
+    "test": "vitest run tests/unit && node --test --test-concurrency=1 tests/api.test.cjs tests/query.test.cjs tests/spec.test.cjs",
+    "test:fuzz": "node --test --test-concurrency=1 tests/fuzz.test.cjs"
+  },
+  "dependencies": {
+    "@types/supertest": "catalog:",
+    "acorn": "catalog:",
+    "acorn-walk": "catalog:",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
+    "json-logic-js": "catalog:",
+    "path-to-regexp": "catalog:",
+    "supertest": "catalog:",
+    "yaml": "catalog:"
+  },
+  "devDependencies": {
+    "@ryangreenup/oxlint-config": "workspace:*",
+    "@ryangreenup/typescript-config": "workspace:*",
+    "@strapi/strapi": "catalog:",
+    "@types/json-logic-js": "catalog:",
+    "@types/node": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "fast-check": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "qs": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "@strapi/strapi": "^5.62.0",
+    "zod": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "openapi-contract",
+    "displayName": "OpenAPI Typed Spec Generator",
+    "description": "Generate OpenAPI Spec for Strapi REST API"
+  }
+}

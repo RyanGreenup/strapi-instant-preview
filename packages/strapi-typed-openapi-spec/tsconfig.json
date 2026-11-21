@@ -1,0 +1,16 @@
+{
+  "extends": "@ryangreenup/typescript-config/node-app-cjs.json",
+  "compilerOptions": {
+    // tsdown generates declarations with tsgo, which does not need explicit
+    // export types. The vendored source relies on inferred return types.
+    "isolatedDeclarations": false,
+    // The vendored source was written against Strapi's server tsconfig
+    // (strict, without the @tsconfig/strictest additions below). Turn these
+    // back on one at a time as the code is brought up to the workspace bar.
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": false
+  },
+  "include": ["server/src"]
+}

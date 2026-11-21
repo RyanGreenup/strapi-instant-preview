@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "fixture_link_cards",
+  "info": {
+    "singularName": "link-card",
+    "pluralName": "link-cards",
+    "displayName": "Link card"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "label": { "type": "string", "required": true, "maxLength": 40 },
+    "kind": {
+      "type": "enumeration",
+      "enum": ["topic", "external", "email"],
+      "default": "topic",
+      "required": true
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60,
+      "regex": "^https://",
+      "conditions": { "visible": { "==": [{ "var": "kind" }, "external"] } }
+    },
+    "email": {
+      "type": "email",
+      "required": true,
+      "conditions": { "visible": { "==": [{ "var": "kind" }, "email"] } }
+    },
+    "topic": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::topic.topic",
+      "required": true
+    },
+    "cover": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    }
+  }
+}

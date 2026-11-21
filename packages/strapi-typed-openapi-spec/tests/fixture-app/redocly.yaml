@@ -1,0 +1,11 @@
+rules:
+  struct: error
+  no-unresolved-refs: error
+  # Strapi's GET /auth/{provider}/callback and DELETE /auth/sessions/{sessionId}
+  # overlap by shape, but not by HTTP method. Redocly ignores verbs for this rule.
+  no-ambiguous-paths: off
+  path-parameters-defined: error
+  operation-parameters-unique: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  security-defined: error

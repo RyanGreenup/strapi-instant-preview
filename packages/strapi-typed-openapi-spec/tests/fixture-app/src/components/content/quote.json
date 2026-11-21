@@ -1,0 +1,8 @@
+{
+  "collectionName": "fixture_content_quotes",
+  "info": { "displayName": "Quote" },
+  "attributes": {
+    "quotation": { "type": "text", "required": true },
+    "attribution": { "type": "string" }
+  }
+}

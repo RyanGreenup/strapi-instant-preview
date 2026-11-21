@@ -1,0 +1,8 @@
+# Strapi fixture runtime state
+tests/fixture-app/.tmp
+tests/fixture-app/.strapi
+tests/fixture-app/.strapi-updater.json
+tests/fixture-app/public/uploads/*
+!tests/fixture-app/public/uploads/.gitkeep
+!tests/fixture-app/public/uploads/cover_a0e8ec5a47.txt
+tests/.fuzz/

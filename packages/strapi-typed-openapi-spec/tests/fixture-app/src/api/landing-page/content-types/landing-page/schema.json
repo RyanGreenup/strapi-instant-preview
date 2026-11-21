@@ -1,0 +1,18 @@
+{
+  "kind": "singleType",
+  "collectionName": "fixture_landing_pages",
+  "info": {
+    "singularName": "landing-page",
+    "pluralName": "landing-pages",
+    "displayName": "Landing page"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "headline": { "type": "string", "required": true },
+    "introduction": {
+      "type": "component",
+      "repeatable": false,
+      "component": "content.quote"
+    }
+  }
+}
