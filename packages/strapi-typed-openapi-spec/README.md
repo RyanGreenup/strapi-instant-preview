@@ -86,8 +86,8 @@ Bound methods never throw or reject. Each call resolves to
 Operations imported from `./cms-client` check each 2xx body against the
 contract's JSON Schema with [TypeBox](https://github.com/sinclairzx81/typebox),
 so the frontend needs `typebox` 1.4 or later. To skip validation, import the
-same names from `./cms-client/unchecked` instead. Nothing there imports TypeBox,
-so bundlers leave it out.
+same names from `./cms-client/unchecked` instead, that does not bring in Typebox
+so it's left out of the bundle.
 
 Each schema is compiled on first use. TypeBox compiles it to JavaScript where
 the environment allows it, and interprets it where it does not, such as under a
@@ -97,6 +97,10 @@ operation is not validated.
 
 For authenticated server-side calls, pass `token` to `createCmsClient`, remember
 not to embed private tokens in browser code.
+
+Typebox is used over Zod as it gives stricter typing for this use case and a
+smaller bundle size. Zod is used to infer the types as it builds on top of
+Strapi's Zod schema which is used in the routes.
 
 ## Use the tooling from TypeScript
 
