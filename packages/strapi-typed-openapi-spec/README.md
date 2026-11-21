@@ -101,12 +101,35 @@ the list) and a dot segment would climb out of the API root. An error raised
 before the request is sent names the operation by its method and path template,
 such as `PUT /articles/{id}`.
 
+#### Populate-aware types
+
+A literal `populate` argument types the response. The relations, media and
+components it describes are present in the type, not merely a count:
+
+```ts
+const result = await cms.articles({ populate: { topic: true } });
+if (result.ok) {
+  const [article] = result.value.data.data;
+  article.topic; // Topic | null: always present, not just a count
+  article.cover; // error: cover was not populated
+  article.topic?.parent; // error: `topic: true` populates one level
+}
+```
+
+Every form Strapi accepts works including a key (`"cover"`), a comma list
+(`"cover,topics"`), dot paths (`["topic.parent"]`), `"*"`, nested objects, and
+`on` for dynamic zones. `{ count: true }` gives `{ count }` where the contract
+says Strapi sends one, and the related entries where Strapi ignores it.
+
+The response preserves its generated type when the call has no `populate`
+
 #### Relation counts
 
 Strapi answers `populate[key][count]=true` with `{ count }` instead of the
-related entries, so every relation's type includes that shape. If no query asks
-for counts, bind with `populated: true`. A body that holds a count then fails
-validation, and the types leave counts out:
+related entries, so a relation's type includes that shape unless the call's
+`populate` tree types it (see above). If no query asks for counts, bind with
+`populated: true`. A body that holds a count then fails validation, and the
+types leave counts out:
 
 ```ts
 const cms = bindClient(

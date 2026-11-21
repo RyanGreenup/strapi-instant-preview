@@ -320,6 +320,259 @@ type PopulatedSuccess<Response> = Response extends { data: infer Data }
   ? Omit<Response, "data"> & { data: Populated<Data> }
   : Response;
 
+////////////////////////////////////////////////////////////
+// Populate-aware responses
+////////////////////////////////////////////////////////////
+
+/** Marks a call without a `populate` argument: its response stays as generated. */
+interface NoTree {
+  readonly "cms-client.no-tree": true;
+}
+
+/** A key the tree does not populate: Strapi leaves it out. */
+interface Absent {
+  readonly "cms-client.absent": true;
+}
+
+/** A key whose population the tree's type cannot tell: it stays as generated. */
+interface Unknown {
+  readonly "cms-client.unknown": true;
+}
+
+/** The populate values that turn a key off, and those that turn it on. */
+type Off = false | "false" | "f" | "0" | null | undefined;
+type On = true | "true" | "t" | "1";
+
+/** `"a,b"` as `"a" | "b"`. */
+type Split<Names extends string> =
+  Names extends `${infer Head},${infer Tail}` ? Head | Split<Tail> : Names;
+
+/** What a list of names (`"a,b.c"`, `["a", "b.c"]`) populates at `Key`. */
+type Named<Name extends string, Key extends string> = string extends Name
+  ? Unknown
+  : "*" extends Name
+    ? true
+    : [Name extends `${Key}.${infer Tail}` ? Tail : never] extends [never]
+      ? Key extends Name
+        ? true
+        : Absent
+      : { readonly populate: Name extends `${Key}.${infer Tail}` ? Tail : never };
+
+/** What one tree populates at `Key`: a branch, {@link Absent} or {@link Unknown}. */
+type AtOne<Tree, Key extends string> = Tree extends Off
+  ? Absent
+  : Tree extends On
+    ? true
+    : Tree extends string
+      ? Named<Split<Tree>, Key>
+      : Tree extends readonly (infer Name)[]
+        ? Name extends string
+          ? Named<Split<Name>, Key>
+          : Unknown
+        : Tree extends { readonly populate: infer Inner }
+          ? At<Inner, Key>
+          : Tree extends object
+            ? {} extends Tree
+              ? Unknown
+              : Key extends keyof Tree
+                ? Branch<Tree[Key]>
+                : Absent
+            : Unknown;
+
+/** A value under one key of a populate object. */
+type Branch<Value> = Value extends Off ? Absent : Value extends On ? true : Value;
+
+/**
+ * What `Tree` populates at `Key`. A tree type that allows both (a variable
+ * typed `boolean`, the generated parameter type) is {@link Unknown}.
+ */
+type At<Tree, Key extends string> = [Tree] extends [never]
+  ? Absent
+  : Decide<Tree extends unknown ? AtOne<Tree, Key> : never>;
+type Decide<Found> = [Extract<Found, Unknown>] extends [never]
+  ? [Extract<Found, Absent>] extends [never]
+    ? Found
+    : [Exclude<Found, Absent>] extends [never]
+      ? Absent
+      : Unknown
+  : Unknown;
+
+/** The tree below a populated key; a wide options type is unknown. */
+type Below<Found> = Found extends { readonly populate: infer Inner }
+  ? Inner
+  : Found extends object
+    ? {} extends Found
+      ? string
+      : never
+    : never;
+
+type Item<Value> = Value extends readonly (infer Element)[] ? Element : Value;
+
+/**
+ * Whether a key holds a relation, media or component. Their values (or
+ * array elements) are entries with an `id`; scalars, blocks and json never
+ * are.
+ */
+type IsEntry<Value> = [
+  Extract<Item<NonNullable<Value>>, { id: number }>,
+] extends [never]
+  ? false
+  : true;
+
+type WithoutCount<Value> = Value extends unknown
+  ? IsRelationCount<Value> extends true
+    ? never
+    : Value
+  : never;
+type OnlyCount<Value> = Value extends unknown
+  ? IsRelationCount<Value> extends true
+    ? Value
+    : never
+  : never;
+
+/** A dynamic zone entry takes the fragment its `__component` names in `on`. */
+type Shape<Value, Found> = Value extends { readonly __component: infer Name }
+  ? Found extends { readonly on: infer Fragments }
+    ? Name extends keyof Fragments
+      ? Selected<Value, Below<Branch<Fragments[Name]>>>
+      : Selected<Value, never>
+    : Selected<Value, Below<Found>>
+  : Selected<Value, Below<Found>>;
+
+/**
+ * A populated key's value. `{ count: true }` gives the count where the
+ * contract allows one; elsewhere Strapi ignores it and sends the entries.
+ */
+type Apply<Value, Found> = Found extends { readonly count: true | "true" }
+  ? [OnlyCount<Value>] extends [never]
+    ? Entries<Value, Found>
+    : OnlyCount<Value>
+  : Entries<Value, Found>;
+type Entries<Value, Found> =
+  WithoutCount<Value> extends infer Kept
+    ? Kept extends readonly (infer Element)[]
+      ? Shape<Element, Found>[]
+      : Kept extends null
+        ? null
+        : Shape<Kept, Found>
+    : never;
+
+type KeyState<Value, Tree, Key> = IsEntry<Value> extends false
+  ? "keep"
+  : At<Tree, Key & string> extends infer Found
+    ? [Found] extends [Absent]
+      ? "drop"
+      : [Found] extends [Unknown]
+        ? "keep"
+        : "populated"
+    : never;
+
+type Flat<Value> = { [Key in keyof Value]: Value[Key] } & {};
+
+/**
+ * A document as Strapi sends it for populate tree `Tree`.
+ *
+ * A relation, media or component key is required when `Tree` populates it
+ * and absent when it does not. Strapi leaves unpopulated ones out. A key the
+ * tree's type cannot tell about, such as one populated through a variable,
+ * keeps its generated type. Scalars always do.
+ */
+type Selected<Document, Tree> = Document extends object
+  ? Document extends readonly unknown[]
+    ? Document
+    : Flat<
+        {
+          [Key in keyof Document as KeyState<
+            Document[Key],
+            Tree,
+            Key
+          > extends "keep"
+            ? Key
+            : never]: Document[Key];
+        } & {
+          [Key in keyof Document as KeyState<
+            Document[Key],
+            Tree,
+            Key
+          > extends "populated"
+            ? Key
+            : never]-?: Apply<
+            Exclude<Document[Key], undefined>,
+            At<Tree, Key & string>
+          >;
+        }
+      >
+  : Document;
+
+/** A response body (`{ data, meta }`) whose documents are {@link Selected}. */
+type SelectedBody<Body, Tree> = Body extends { data: infer Data }
+  ? Omit<Body, "data"> & {
+      data: Data extends readonly (infer Document)[]
+        ? Selected<Document, Tree>[]
+        : Selected<Data, Tree>;
+    }
+  : Body;
+
+/** A 2xx response whose body's documents are {@link Selected}. */
+type SelectedSuccess<Response, Tree> = Response extends { data: infer Body }
+  ? Omit<Response, "data"> & { data: SelectedBody<Body, Tree> }
+  : Response;
+
+/** A populate tree as a `const` type parameter infers it: readonly throughout. */
+type ReadonlyTree<Tree> = Tree extends readonly (infer Element)[]
+  ? readonly ReadonlyTree<Element>[]
+  : Tree extends object
+    ? { readonly [Key in keyof Tree]: ReadonlyTree<Tree[Key]> }
+    : Tree;
+
+type HasPopulate<Value> = [NonNullable<Value>] extends [{ populate?: unknown }]
+  ? true
+  : false;
+
+/** The populate trees an operation's arguments accept. */
+type TreeFor<Args extends readonly unknown[]> = {
+  [Index in keyof Args]: NonNullable<Args[Index]> extends {
+    populate?: infer Tree;
+  }
+    ? ReadonlyTree<NonNullable<Tree>>
+    : never;
+}[number];
+
+/** The arguments with `populate` typed as `Tree`. */
+type WithTree<Args extends readonly unknown[], Tree> = {
+  [Index in keyof Args]: HasPopulate<Args[Index]> extends true
+    ?
+        | (Omit<NonNullable<Args[Index]>, "populate"> & {
+            readonly populate?: Tree;
+          })
+        | Extract<Args[Index], undefined>
+    : Args[Index];
+};
+
+/** The response of a call with populate tree `Tree`. */
+type TreeSuccess<Response, Tree, IsPopulated extends boolean> = [
+  Tree,
+] extends [NoTree]
+  ? IsPopulated extends true
+    ? PopulatedSuccess<Response>
+    : Response
+  : IsPopulated extends true
+    ? PopulatedSuccess<SelectedSuccess<Response, Tree>>
+    : SelectedSuccess<Response, Tree>;
+
+/**
+ * One bound operation. A literal `populate` argument types the response:
+ * the relations, media and components it names are present, the others
+ * absent. Without one, the response is typed as generated.
+ */
+type BoundOperation<Op extends CmsOperation, IsPopulated extends boolean> = <
+  const Tree extends TreeFor<Parameters<Op>> | NoTree = NoTree,
+>(
+  ...args: WithTree<Parameters<Op>, Tree>
+) => Promise<
+  Result<TreeSuccess<CmsSuccess<Op>, Tree, IsPopulated>, CmsError<Op>>
+>;
+
 /**
  * Checks a body for one status. `undefined` means no schema to check. With
  * `populated`, a relation count fails the check.
@@ -489,22 +742,14 @@ const createCmsClient = (options: {
 
 /**
  * Operations bound by {@link bindClient}: same parameters, but each call
- * resolves to a `Result` and never throws or rejects.
+ * resolves to a `Result` and never throws or rejects, and a literal
+ * `populate` argument types the response (see {@link BoundOperation}).
  */
 type BoundOperations<
   Operations extends Record<string, CmsOperation>,
   IsPopulated extends boolean = false,
 > = {
-  [K in keyof Operations]: (
-    ...args: Parameters<Operations[K]>
-  ) => Promise<
-    Result<
-      IsPopulated extends true
-        ? PopulatedSuccess<CmsSuccess<Operations[K]>>
-        : CmsSuccess<Operations[K]>,
-      CmsError<Operations[K]>
-    >
-  >;
+  [K in keyof Operations]: BoundOperation<Operations[K], IsPopulated>;
 };
 
 /** Options for {@link bindClient}. */
@@ -693,6 +938,7 @@ export {
   ValidationError,
   validatorKey,
   type BindOptions,
+  type BoundOperation,
   type BoundOperations,
   type CmsClient,
   type CmsData,
@@ -704,6 +950,8 @@ export {
   type Populated,
   type RelationCount,
   type Result,
+  type Selected,
+  type SelectedSuccess,
   type ValidationIssue,
   type Validator,
 };
