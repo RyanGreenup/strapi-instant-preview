@@ -30,34 +30,58 @@ const populatedDefinitions: Record<string, XSchema> = {
   StrapiCount: false,
 };
 
+const registered: Record<string, XSchema> = {};
+let operationCount = 0;
+const compiled = new Map<
+  boolean,
+  { readonly validator: Compiled; readonly size: number }
+>();
+
+const validatorFor = (populated: boolean): Compiled => {
+  const size = Object.keys(registered).length;
+  const cached = compiled.get(populated);
+  if (cached !== undefined && cached.size === size) return cached.validator;
+  const validator = Compile(
+    populated ? populatedDefinitions : definitions,
+    { type: "object", properties: { ...registered } },
+  );
+  compiled.set(populated, { validator, size });
+  return validator;
+};
+
 /**
  * Give an operation the contract's JSON Schemas for its 2xx bodies, keyed by
  * status. Returns a copy: the operation itself stays unchecked.
- *
- * Each schema is compiled with TypeBox on first use, then reused. TypeBox
- * compiles to JavaScript where the environment allows it, and interprets
- * the schema where it does not (such as under a strict CSP).
  */
 export const withSchemas = <Op extends CmsOperation>(
   operation: Op,
   schemas: Readonly<Record<number, object>>,
 ): Op => {
-  const compiled = new Map<string, Compiled>();
+  const id = operationCount++;
+  for (const [status, schema] of Object.entries(schemas)) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    registered[`${id}:${status}`] = schema as XSchema;
+  }
   const validate: Validator = (status, data, populated) => {
-    const schema = schemas[status];
-    if (schema === undefined) return undefined;
-    const key = `${status}:${populated}`;
-    let validator = compiled.get(key);
-    if (validator === undefined) {
-      validator = Compile(
-        populated ? populatedDefinitions : definitions,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        schema as XSchema,
-      );
-      compiled.set(key, validator);
+    if (schemas[status] === undefined) return undefined;
+    // The wrapper's property is optional, so an undefined body would pass.
+    if (data === undefined) {
+      const message = "/ must not be undefined";
+      return {
+        success: false,
+        error: { message, issues: [{ code: "type", message, path: [] }] },
+      };
     }
-    if (validator.Check(data)) return { success: true, data };
-    const [, errors] = validator.Errors(data);
+    const key = `${id}:${status}`;
+    const validator = validatorFor(populated);
+    const wrapped = { [key]: data };
+    if (validator.Check(wrapped)) return { success: true, data };
+    const [, wrappedErrors] = validator.Errors(wrapped);
+    const prefix = `/${key}`;
+    const errors = wrappedErrors.map((error) => ({
+      ...error,
+      instancePath: error.instancePath.slice(prefix.length),
+    }));
     const issues: ValidationIssue[] = errors.map((error) => ({
       code: error.keyword,
       message: error.message,
