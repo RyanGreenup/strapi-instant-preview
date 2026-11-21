@@ -29,6 +29,7 @@
     "@astrojs/check": "catalog:",
     "@types/node": "catalog:",
     "@types/sanitize-html": "catalog:",
+    "execa": "catalog:",
     "typescript": "catalog:typescript-api"
   },
   "engines": {
