@@ -1,6 +1,6 @@
 {
   "name": "@ryangreenup/strapi-typed-openapi-spec",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": false,
   "description": "Generate OpenAPI Spec and API client for Strapi REST API",
   "keywords": [],
