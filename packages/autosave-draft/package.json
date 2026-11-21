@@ -3,16 +3,16 @@
   "version": "1.0.1",
   "description": "Autosave Strapi drafts with a per-tab revert snapshot",
   "keywords": [],
+  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/autosave-draft#readme",
+  "bugs": {
+    "url": "https://github.com/RyanGreenup/strapi-instant-preview/issues"
+  },
   "license": "MIT",
   "author": "Ryan Greenup <ryanxgreenup@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RyanGreenup/strapi-instant-preview.git",
     "directory": "packages/autosave-draft"
-  },
-  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/autosave-draft#readme",
-  "bugs": {
-    "url": "https://github.com/RyanGreenup/strapi-instant-preview/issues"
   },
   "files": [
     "dist"
