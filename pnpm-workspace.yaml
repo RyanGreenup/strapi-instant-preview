@@ -26,14 +26,14 @@ catalog:
   "@oxlint/plugins": 1.93.0
   "@playwright/test": 1.65.1
   "@redocly/cli": 2.82.0
-  "@strapi/content-manager": ^5.62.0
-  "@strapi/database": 5.62.0
+  "@strapi/content-manager": ^5.63.0
+  "@strapi/database": 5.63.0
   "@strapi/design-system": ^2.3.1
   "@strapi/icons": ^2.3.1
-  "@strapi/openapi": 5.62.0
-  "@strapi/plugin-cloud": 5.62.0
-  "@strapi/plugin-users-permissions": 5.62.0
-  "@strapi/strapi": ^5.62.0
+  "@strapi/openapi": 5.63.0
+  "@strapi/plugin-cloud": 5.63.0
+  "@strapi/plugin-users-permissions": 5.63.0
+  "@strapi/strapi": ^5.63.0
   "@tsconfig/strictest": 2.0.9
   "@types/json-logic-js": 2.0.8
   "@types/node": 26.6.6
