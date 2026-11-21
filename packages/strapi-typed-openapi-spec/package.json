@@ -1,10 +1,10 @@
 {
   "name": "@ryangreenup/strapi-typed-openapi-spec",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "Generate OpenAPI Spec and API client for Strapi REST API",
   "keywords": [],
-  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/autosave-draft#readme",
+  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/strapi-typed-openapi-spec#readme",
   "bugs": {
     "url": "https://github.com/RyanGreenup/strapi-instant-preview/issues"
   },
@@ -13,7 +13,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RyanGreenup/strapi-instant-preview.git",
-    "directory": "packages/autosave-draft"
+    "directory": "packages/strapi-typed-openapi-spec"
   },
   "bin": {
     "openapi-contract": "./dist/server/src/cli/main.js"
