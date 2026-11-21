@@ -160,17 +160,17 @@ class JsonParseError extends CmsErrorBase {
   }
 }
 
-/** One problem found by response validation. Zod issues have this shape. */
+/**
+ * One problem found by response validation: the JSON Schema keyword that
+ * failed (`code`) and where in the body (`path`).
+ */
 interface ValidationIssue {
   readonly code?: string;
   readonly message: string;
   readonly path: readonly PropertyKey[];
 }
 
-/**
- * A 2xx body that did not match the contract's schema. The validator's
- * error (a `ZodError`) is the `cause`.
- */
+/** A 2xx body that did not match the contract's schema. */
 class ValidationError extends CmsErrorBase {
   public readonly kind = "validation";
   public readonly status: number;
@@ -184,7 +184,7 @@ class ValidationError extends CmsErrorBase {
     error: { message: string; issues: readonly ValidationIssue[] },
     received: unknown,
   ) {
-    super(`Response failed validation: ${error.message}`, context, error);
+    super(`Response failed validation: ${error.message}`, context);
     this.status = status;
     this.issues = error.issues;
     this.received = received;
@@ -405,8 +405,8 @@ type BoundOperations<Operations extends Record<string, CmsOperation>> = {
  * ```
  *
  * Operations imported from `index.js` check 2xx bodies against the
- * contract with zod. Import them from `unchecked.js` instead to skip that:
- * zod is then left out of the bundle.
+ * contract with TypeBox. Import them from `unchecked.js` instead to skip that:
+ * TypeBox is then left out of the bundle.
  *
  * Pass only the operations you use: bundlers keep exactly those. Options
  * given in a call are merged over the client's.

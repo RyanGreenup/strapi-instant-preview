@@ -26,65 +26,68 @@ function operationName(operationId: string): string {
     .join("");
 }
 
+const COMPONENT_REF = "#/components/schemas/";
+
 /**
- * Prepare a contract schema for zod's `fromJSONSchema`: point `$ref`s at
- * `$defs`, and drop `if`/`then`/`else`, which zod cannot express. Only
- * the conditional rules (such as a field required for one `kind`) go
- * unchecked; the rest of the schema is still validated.
+ * The component names a schema refers to, or `undefined` if it has a
+ * `$ref` that is not a component.
  */
-function toZodJsonSchema(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(toZodJsonSchema);
-  if (node === null || typeof node !== "object") return node;
-  const out: Record<string, unknown> = {};
+function componentRefs(node: unknown, found = new Set<string>()) {
+  if (node === null || typeof node !== "object") return found;
   for (const [key, value] of Object.entries(node)) {
-    if (key === "if" || key === "then" || key === "else") continue;
-    out[key] =
-      key === "$ref" && typeof value === "string"
-        ? value.replace("#/components/schemas/", "#/$defs/")
-        : toZodJsonSchema(value);
+    if (key !== "$ref") componentRefs(value, found);
+    else if (typeof value === "string" && value.startsWith(COMPONENT_REF)) {
+      found.add(value.slice(COMPONENT_REF.length));
+    } else throw new Error(`Unsupported $ref ${String(value)}`);
   }
-  return out;
+  return found;
 }
 
 /**
- * Keep only the `$defs` that `roots` reach, following `$ref`s. Most of a
- * Strapi contract (filters, populate, inputs) describes requests, which
- * response validation never needs.
+ * Keep only the components that `roots` reach. Most of a Strapi contract
+ * (filters, populate, inputs) describes requests, which response
+ * validation never needs. Throws if a reference does not resolve.
  */
-function reachableDefs(
-  defs: Record<string, unknown>,
+function reachableComponents(
+  components: Record<string, unknown>,
   roots: unknown[],
 ): Record<string, unknown> {
   const kept: Record<string, unknown> = {};
-  const visit = (node: unknown): void => {
-    for (const [, name] of JSON.stringify(node).matchAll(
-      /"#\/\$defs\/([^"]+)"/gu,
-    )) {
-      if (name === undefined || name in kept) continue;
-      kept[name] = defs[name];
-      visit(defs[name]);
+  const pending = roots.flatMap((root) => [...componentRefs(root)]);
+  for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
+    if (name in kept) continue;
+    if (!Object.hasOwn(components, name)) {
+      throw new Error(`Unresolved $ref ${COMPONENT_REF}${name}`);
     }
-  };
-  for (const root of roots) visit(root);
+    kept[name] = components[name];
+    pending.push(...componentRefs(components[name]));
+  }
   return kept;
 }
 
 /**
- * Write `generated/schemas.ts` (the contract's component schemas) and
- * `generated/checked.ts` (every operation, with its 2xx JSON schemas
- * attached). A schema that zod cannot convert is left out, with a warning,
- * so that operation is returned unchecked rather than failing at runtime.
+ * TypeBox resolves a `$ref` by name against its context, so
+ * `#/components/schemas/Article` becomes `Article`.
+ */
+function toContextRefs<T>(schema: T): T {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return JSON.parse(
+    JSON.stringify(schema).replaceAll(`"${COMPONENT_REF}`, '"'),
+  ) as T;
+}
+
+/**
+ * Write `generated/schemas.ts` (the component schemas that 2xx bodies use)
+ * and `generated/checked.ts` (every operation, with its 2xx JSON schemas
+ * attached). A schema with a reference that does not resolve is left out,
+ * with a warning, so that operation is returned unchecked rather than
+ * failing at runtime.
  */
 async function writeValidation(
   document: OpenAPIDocument,
   generated: string,
 ): Promise<string[]> {
-  const { fromJSONSchema } = await import("zod");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  const $defs = toZodJsonSchema(document.components.schemas) as Record<
-    string,
-    unknown
-  >;
+  const components = document.components.schemas;
   const roots: unknown[] = [];
   const warnings: string[] = [];
   const lines = [
@@ -101,12 +104,10 @@ async function writeValidation(
       for (const [status, response] of Object.entries(operation.responses)) {
         const schema = response.content?.["application/json"]?.schema;
         if (!/^2\d\d$/u.test(status) || schema === undefined) continue;
-        const json = toZodJsonSchema(schema);
         try {
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          fromJSONSchema({ ...(json as object), $defs } as never);
-          schemas[status] = json;
-          roots.push(json);
+          reachableComponents(components, [schema]);
+          schemas[status] = toContextRefs(schema);
+          roots.push(schema);
         } catch (error) {
           warnings.push(
             `Not validating ${method.toUpperCase()} ${path} ${status}: ${error instanceof Error ? error.message : String(error)}`,
@@ -123,7 +124,7 @@ async function writeValidation(
   await writeFile(join(generated, "checked.ts"), `${lines.join("\n")}\n`);
   await writeFile(
     join(generated, "schemas.ts"),
-    `// The component schemas that 2xx bodies use, for zod's fromJSONSchema.\nexport const $defs: Record<string, Record<string, unknown>> = ${JSON.stringify(reachableDefs($defs, roots))};\n`,
+    `// The component schemas that 2xx bodies use, keyed by name for TypeBox.\nexport const $defs: Record<string, object> = ${JSON.stringify(toContextRefs(reachableComponents(components, roots)))};\n`,
   );
   return warnings;
 }

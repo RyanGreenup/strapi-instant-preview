@@ -1,30 +1,55 @@
-import { fromJSONSchema, type ZodType } from "zod";
+import { Compile, type Validator as Compiled, type XSchema } from "typebox/schema";
 
-import { type CmsOperation, type Validator, validatorKey } from "./client.js";
+import {
+  type CmsOperation,
+  type ValidationIssue,
+  type Validator,
+  validatorKey,
+} from "./client.js";
 import { $defs } from "./generated/schemas.js";
 
-type JsonSchema = Exclude<Parameters<typeof fromJSONSchema>[0], boolean>;
+/** `/data/0/id` to `["data", 0, "id"]`. */
+function pathOf(pointer: string): PropertyKey[] {
+  return pointer
+    .split("/")
+    .slice(1)
+    .map((part) => part.replaceAll("~1", "/").replaceAll("~0", "~"))
+    .map((part) => (/^\d+$/u.test(part) ? Number(part) : part));
+}
 
 /**
  * Give an operation the contract's JSON Schemas for its 2xx bodies, keyed by
  * status. Returns a copy: the operation itself stays unchecked.
  *
- * Zod schemas are built from the JSON Schemas on first use, then reused.
+ * Each schema is compiled with TypeBox on first use, then reused. TypeBox
+ * compiles to JavaScript where the environment allows it, and interprets
+ * the schema where it does not (such as under a strict CSP).
  */
 export const withSchemas = <Op extends CmsOperation>(
   operation: Op,
-  schemas: Readonly<Record<number, JsonSchema>>,
+  schemas: Readonly<Record<number, object>>,
 ): Op => {
-  const built = new Map<number, ZodType>();
+  const compiled = new Map<number, Compiled>();
   const validate: Validator = (status, data) => {
-    const json = schemas[status];
-    if (json === undefined) return undefined;
-    let schema = built.get(status);
-    if (schema === undefined) {
-      schema = fromJSONSchema({ ...json, $defs });
-      built.set(status, schema);
+    const schema = schemas[status];
+    if (schema === undefined) return undefined;
+    let validator = compiled.get(status);
+    if (validator === undefined) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      validator = Compile($defs as Record<string, XSchema>, schema as XSchema);
+      compiled.set(status, validator);
     }
-    return schema.safeParse(data);
+    if (validator.Check(data)) return { success: true, data };
+    const [, errors] = validator.Errors(data);
+    const issues: ValidationIssue[] = errors.map((error) => ({
+      code: error.keyword,
+      message: error.message,
+      path: pathOf(error.instancePath),
+    }));
+    const message = errors
+      .map((error) => `${error.instancePath || "/"} ${error.message}`)
+      .join("; ");
+    return { success: false, error: { message, issues } };
   };
   // `bind` keeps `length`, which `bindClient` uses to find the options slot.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion

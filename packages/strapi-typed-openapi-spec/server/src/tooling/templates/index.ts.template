@@ -1,6 +1,6 @@
 /**
  * The CMS client. Operations from here check 2xx bodies against the
- * contract with zod when called through `bindClient`:
+ * contract with TypeBox when called through `bindClient`:
  *
  * ```ts
  * import { bindClient, createCmsClient, getArticles } from "./cms-client/index.js";
@@ -9,7 +9,7 @@
  * const result = await cms.getArticles({ pagination: { page: 1 } });
  * ```
  *
- * To skip validation and leave zod out of the bundle, import the same names
+ * To skip validation and leave TypeBox out of the bundle, import the same names
  * from `./cms-client/unchecked.js` instead.
  */
 // Each operation is its own export, so bundlers keep only the ones used.

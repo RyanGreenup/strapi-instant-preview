@@ -68,7 +68,7 @@ const bind = (module, options = {}) =>
     findOne: module.apiArticleArticleFindOne,
   });
 
-test("every 2xx JSON schema in the fixture contract converts to zod", () => {
+test("every 2xx JSON schema in the fixture contract is validated", () => {
   expect(warnings).toEqual([]);
 });
 
@@ -104,6 +104,38 @@ test("a body that breaks the contract is a ValidationError", async () => {
   expect(result.error.status).toBe(200);
   expect(result.error.issues[0].path).toEqual(["data"]);
   expect(result.error.received.data).toBe("not a list");
+});
+
+test("conditional rules (if/then) are enforced", async () => {
+  const time = "2026-01-01T00:00:00.000Z";
+  const card = {
+    id: 1,
+    documentId: "a00000000000000000000001",
+    label: "Docs",
+    url: null,
+    email: null,
+    createdAt: time,
+    updatedAt: time,
+    publishedAt: time,
+  };
+  const serve = (kind) => async (input, init) => {
+    const body = await (await fetch(input, init)).json();
+    return Response.json({ ...body, data: [{ ...card, kind }] });
+  };
+  const call = (kind) =>
+    checked
+      .bindClient(
+        checked.createCmsClient({ baseUrl, token, fetch: serve(kind) }),
+        { find: checked.apiLinkCardLinkCardFind },
+      )
+      .find();
+
+  // A topic card may leave `url` null; an external card may not.
+  const topic = await call("topic");
+  expect(topic.ok).toBe(true);
+  const external = await call("external");
+  expect(external.error.kind).toBe("validation");
+  expect(external.error.issues.map((issue) => issue.code)).toContain("if");
 });
 
 test("unchecked operations skip validation", async () => {

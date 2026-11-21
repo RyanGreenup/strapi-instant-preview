@@ -1,6 +1,6 @@
 {
   "name": "@ryangreenup/strapi-typed-openapi-spec",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": false,
   "description": "Generate OpenAPI Spec and API client for Strapi REST API",
   "keywords": [],
@@ -83,6 +83,7 @@
     "oxlint-tsgolint": "catalog:",
     "qs": "catalog:",
     "tsdown": "catalog:",
+    "typebox": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zod": "catalog:"

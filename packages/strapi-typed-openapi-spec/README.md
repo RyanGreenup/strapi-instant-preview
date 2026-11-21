@@ -50,9 +50,50 @@ const connection = createCmsClient({ baseUrl: "https://cms.example.com/api" });
 const cms = bindClient(connection, { articles: apiArticleArticleFind });
 
 // Get the articles
-const response = await cms.articles({ pagination: { page: 1 } });
-if (response.status === 200) console.log(response.data);
+const result = await cms.articles({ pagination: { page: 1 } });
+if (!result.ok) {
+  switch (result.error.kind) {
+    case "http":
+      // `status` narrows `data` to that status's error body
+      if (result.error.status === 401) console.error(result.error.data.error);
+      break;
+    case "validation":
+      console.error(result.error.issues);
+      break;
+  }
+  throw result.error;
+}
+console.log(result.value.data);
 ```
+
+Bound methods never throw or reject. Each call resolves to
+`{ ok: true, value: { data, status, headers } }` for a 2xx response, or
+`{ ok: false, error }`. The `error` is an `Error` subclass with a `kind`:
+
+| `kind`            | When                                           |
+| ----------------- | ---------------------------------------------- |
+| `http`            | The server returned a non-2xx status.          |
+| `validation`      | A 2xx body did not match the contract.         |
+| `json-parse`      | A body that claimed to be JSON did not parse.  |
+| `timeout`         | `timeoutMs` (default 10 seconds) elapsed.      |
+| `aborted`         | The caller's `signal` aborted the request.     |
+| `network`         | No response arrived.                           |
+| `invalid-request` | The request could not be built.                |
+| `unexpected`      | Anything else, such as a validator that threw. |
+
+#### Response validation
+
+Operations imported from `./cms-client` check each 2xx body against the
+contract's JSON Schema with [TypeBox](https://github.com/sinclairzx81/typebox),
+so the frontend needs `typebox` 1.4 or later. To skip validation, import the
+same names from `./cms-client/unchecked` instead. Nothing there imports TypeBox,
+so bundlers leave it out.
+
+Each schema is compiled on first use. TypeBox compiles it to JavaScript where
+the environment allows it, and interprets it where it does not, such as under a
+Content-Security-Policy without `unsafe-eval`. If a response schema has a `$ref`
+that does not resolve, `openapi-contract client` prints a warning and that
+operation is not validated.
 
 For authenticated server-side calls, pass `token` to `createCmsClient`, remember
 not to embed private tokens in browser code.
@@ -68,7 +109,10 @@ import {
 
 const contract = await loadContract({ appDir: "./cms" });
 await writeContract(contract, { out: "./specification.yaml" });
-await generateClient(contract.document, "./frontend/src/cms-client");
+const warnings = await generateClient(
+  contract.document,
+  "./frontend/src/cms-client",
+);
 ```
 
 The same entry point exports `checkContract`, `probeContract`, and
