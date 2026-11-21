@@ -1,9 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { expect, test } from "vitest";
 
-const bin = fileURLToPath(
-  new URL("../../bin/openapi-contract.js", import.meta.url),
+const require = createRequire(import.meta.url);
+const manifest =
+  require.resolve("@ryangreenup/strapi-typed-openapi-spec/package.json");
+const bin = createRequire(manifest).resolve(
+  require(manifest).bin["openapi-contract"],
 );
 const run = (...args) =>
   spawnSync(process.execPath, [bin, ...args], { encoding: "utf8" });
@@ -15,15 +18,14 @@ test.each(["generate", "client", "check", "probe", "audit", undefined])(
       ? run(command, "--app", "/nonexistent", "-h")
       : run("--help");
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("client");
-    expect(result.stdout).toContain("--out");
+    expect(result.stdout).toContain(command ? "--app" : "client");
   },
 );
 
 test("rejects unknown commands and command-specific options", () => {
   const unknown = run("missing");
   expect(unknown.status).toBe(1);
-  expect(unknown.stderr).toContain("Unknown command missing");
+  expect(unknown.stderr).toContain("missing");
   const invalid = run("probe", "--format", "yaml");
   expect(invalid.status).toBe(1);
   expect(invalid.stderr).toContain("Unknown option '--format'");

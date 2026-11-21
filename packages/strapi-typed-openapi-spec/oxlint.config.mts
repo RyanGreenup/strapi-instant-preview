@@ -118,7 +118,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["bin/**", "tests/**"],
+      files: ["tests/**"],
       rules: {
         complexity: "off", // 2
         curly: "off", // 103

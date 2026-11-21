@@ -15,17 +15,24 @@
     "url": "git+ssh://git@github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin.git"
   },
   "bin": {
-    "openapi-contract": "./bin/openapi-contract.js"
+    "openapi-contract": "./dist/server/src/cli/main.js"
   },
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "type": "commonjs",
   "exports": {
     ".": {
       "types": "./dist/server/src/library.d.ts",
       "default": "./dist/server/src/library.js"
+    },
+    "./cli": {
+      "types": "./dist/server/src/cli/command.d.ts",
+      "default": "./dist/server/src/cli/command.js"
+    },
+    "./tooling": {
+      "types": "./dist/server/src/tooling/index.d.ts",
+      "default": "./dist/server/src/tooling/index.js"
     },
     "./package.json": "./package.json",
     "./strapi-server": {
@@ -52,6 +59,7 @@
     "acorn-walk": "catalog:",
     "ajv": "catalog:",
     "ajv-formats": "catalog:",
+    "citty": "catalog:",
     "json-logic-js": "catalog:",
     "orval": "catalog:",
     "path-to-regexp": "catalog:",

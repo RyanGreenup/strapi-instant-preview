@@ -1,10 +1,14 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  // Strapi loads the plugin with require(). The bin script and the tests load
-  // modules by their path under dist/server/src, so keep one output file per
-  // source file and keep the source layout.
+  // Preserve the plugin, CLI and library entry paths used by package.json.
   entry: ["server/src/**/*.ts"],
+  copy: [
+    {
+      from: "server/src/tooling/templates/*.ts.template",
+      to: "dist/server/src/tooling/templates",
+    },
+  ],
   root: ".",
   unbundle: true,
   format: ["cjs"],

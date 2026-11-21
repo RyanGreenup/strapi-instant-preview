@@ -3,7 +3,9 @@
 Generate an OpenAPI 3.1 contract from a Strapi v5 app and generate an API
 client.
 
-## Usaage
+## Usage
+
+### OpenAPI Schema
 
 ```sh
 pnpm exec openapi-contract probe
@@ -12,7 +14,11 @@ pnpm exec openapi-contract check --against specification.json
 pnpm exec openapi-contract audit
 ```
 
-## Generate a fetch client
+Run `openapi-contract <command> --help` for command-specific options. Use
+`--app <directory>` to target another Strapi project. File arguments are
+relative to your working directory.
+
+### Generate a fetch client
 
 From the Strapi project, run the following with Node.js 22.18 or later:
 
@@ -50,6 +56,24 @@ if (response.status === 200) console.log(response.data);
 
 For authenticated server-side calls, pass `token` to `createCmsClient`, remember
 not to embed private tokens in browser code.
+
+## Use the tooling from TypeScript
+
+```ts
+import {
+  generateClient,
+  loadContract,
+  writeContract,
+} from "@ryangreenup/strapi-typed-openapi-spec/tooling";
+
+const contract = await loadContract({ appDir: "./cms" });
+await writeContract(contract, { out: "./specification.yaml" });
+await generateClient(contract.document, "./frontend/src/cms-client");
+```
+
+The same entry point exports `checkContract`, `probeContract`, and
+`auditContract`. To embed the CLI as a Citty subcommand, import
+`openapiContractCommand` from `@ryangreenup/strapi-typed-openapi-spec/cli`.
 
 ## Declare custom responses
 

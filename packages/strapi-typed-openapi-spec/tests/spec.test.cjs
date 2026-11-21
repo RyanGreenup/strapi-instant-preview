@@ -19,7 +19,10 @@ const { bootTestApp } = require("../dist/server/src/testing/index.js");
 const appDir = join(__dirname, "fixture-app");
 const fixtureRequire = createRequire(join(appDir, "package.json"));
 const { generate } = fixtureRequire("@strapi/openapi");
-const cli = join(__dirname, "..", "bin", "openapi-contract.js");
+const cli = packageBin(
+  "@ryangreenup/strapi-typed-openapi-spec",
+  "openapi-contract",
+);
 const run = promisify(execFile);
 
 let app;

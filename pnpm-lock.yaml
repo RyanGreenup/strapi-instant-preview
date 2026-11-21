@@ -744,6 +744,9 @@ importers:
       ajv-formats:
         specifier: 'catalog:'
         version: 3.0.1(ajv@8.20.0)
+      citty:
+        specifier: 'catalog:'
+        version: 0.2.2
       json-logic-js:
         specifier: 'catalog:'
         version: 2.0.5

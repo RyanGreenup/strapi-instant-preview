@@ -1,16 +1,19 @@
-"use strict";
+import { copyFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
 
-const { copyFile, mkdir } = require("node:fs/promises");
-const { join } = require("node:path");
+import type { OpenAPIDocument } from "../spec/assemble";
 
-async function generateClient(document, output) {
+// oxlint-disable-next-line unicorn/prefer-module -- Strapi loads this package as CommonJS.
+const templates = join(__dirname, "templates");
+
+export async function generateClient(
+  document: OpenAPIDocument,
+  output: string,
+): Promise<void> {
   const { generate } = await import("orval");
   await mkdir(output, { recursive: true });
   const serializer = join(output, "query-string.ts");
-  await copyFile(
-    join(__dirname, "client/query-string.ts.template"),
-    serializer,
-  );
+  await copyFile(join(templates, "query-string.ts.template"), serializer);
   await generate({
     input: { target: document },
     output: {
@@ -26,9 +29,7 @@ async function generateClient(document, output) {
     },
   });
   await copyFile(
-    join(__dirname, "client/index.ts.template"),
+    join(templates, "index.ts.template"),
     join(output, "index.ts"),
   );
 }
-
-module.exports = { generateClient };
