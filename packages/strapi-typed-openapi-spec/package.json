@@ -1,18 +1,19 @@
 {
   "name": "@ryangreenup/strapi-typed-openapi-spec",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Generate OpenAPI Spec for Strapi REST API",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Generate OpenAPI Spec and API client for Strapi REST API",
   "keywords": [],
-  "homepage": "https://github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin#readme",
+  "homepage": "https://github.com/RyanGreenup/strapi-instant-preview/tree/main/packages/autosave-draft#readme",
   "bugs": {
-    "url": "https://github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin/issues"
+    "url": "https://github.com/RyanGreenup/strapi-instant-preview/issues"
   },
   "license": "GPL-3.0-only",
   "author": "Ryan Greenup <exogenesis@protonmail.com>",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ryangreenup/strapi-typed-open-api-spec-generator-plugin.git"
+    "url": "git+https://github.com/RyanGreenup/strapi-instant-preview.git",
+    "directory": "packages/autosave-draft"
   },
   "bin": {
     "openapi-contract": "./dist/server/src/cli/main.js"
@@ -43,6 +44,9 @@
       "types": "./dist/server/src/testing/index.d.ts",
       "default": "./dist/server/src/testing/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",
