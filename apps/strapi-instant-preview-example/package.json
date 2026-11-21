@@ -43,7 +43,8 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:strapi"
+    "typescript": "catalog:strapi",
+    "web": "workspace:*"
   },
   "engines": {
     "node": ">=22.0.0 <=26.x.x",

@@ -20,6 +20,12 @@
       "pinVersion": "workspace:*"
     },
     {
+      "label": "Unscoped workspace apps (such as web) are also consumed through the workspace protocol.",
+      "specifierTypes": ["workspace-protocol"],
+      "dependencyTypes": ["!local"],
+      "pinVersion": "workspace:*"
+    },
+    {
       "label": "Keep consumer peer ranges independent of build-time pins.",
       "dependencyTypes": ["peer"],
       "preferVersion": "highestSemver"

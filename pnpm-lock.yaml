@@ -299,6 +299,9 @@ importers:
       typescript:
         specifier: catalog:strapi
         version: 5.9.3
+      web:
+        specifier: workspace:*
+        version: link:../web
 
   apps/web:
     dependencies:

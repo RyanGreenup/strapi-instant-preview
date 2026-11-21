@@ -1,7 +1,12 @@
 import path from "node:path";
 
-// The e2e servers default to the dev ports plus one, so the suite can run
-// while the dev servers are up. E2E_STRAPI_PORT and E2E_WEB_PORT override them.
+/**
+ * Ports used by the Web application and CMS
+ *
+ * The e2e servers default to the dev ports plus one, this allows the suite can run
+ * while the dev servers are up. `E2E_STRAPI_PORT` and `E2E_WEB_PORT` override
+ * them.
+ */
 const port = (override: string, dev: string, fallback: number): number =>
   Number(process.env[override] ?? Number(process.env[dev] ?? fallback) + 1);
 
@@ -10,6 +15,17 @@ const WEB_PORT = port("E2E_WEB_PORT", "WEB_PORT", 4321);
 
 const STRAPI_URL = `http://localhost:${STRAPI_PORT}`;
 const WEB_URL = `http://localhost:${WEB_PORT}`;
+
+/**
+ * Directory of the `web` app, which the suite starts as a second server.
+ *
+ * `web` is a `devDependency` of this app, so turbo builds it and the workspace
+ * packages it loads before `test:e2e`.
+ *
+ * It is resolved through the package graph, not a relative path, keeps working if
+ * either app moves.
+ */
+const WEB_DIR = path.dirname(require.resolve("web/package.json"));
 
 /** The signed-in admin session. It holds a session cookie; never commit it. */
 const AUTH_FILE = path.join(__dirname, "../.tmp/e2e/auth.json");
@@ -29,4 +45,4 @@ const serverEnv: Record<string, string> = {
   DATABASE_FILENAME: ".tmp/e2e/data.db",
 };
 
-export { AUTH_FILE, STRAPI_URL, WEB_URL, serverEnv };
+export { AUTH_FILE, STRAPI_URL, WEB_DIR, WEB_URL, serverEnv };

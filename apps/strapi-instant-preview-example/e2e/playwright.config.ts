@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { AUTH_FILE, STRAPI_URL, WEB_URL, serverEnv } from "./env";
+import { AUTH_FILE, STRAPI_URL, WEB_DIR, WEB_URL, serverEnv } from "./env";
 
 // Use this Node binary to bypass mise's PATH shim.
 // The shim reapplies .env.yaml and would replace e2e ports with dev ports.
@@ -49,7 +49,7 @@ export default defineConfig({
     {
       // Bypass Astro's lock so this server can coexist with the developer's server.
       command: `${NODE} node_modules/astro/bin/astro.mjs dev --ignore-lock`,
-      cwd: "../../web",
+      cwd: WEB_DIR,
       url: WEB_URL,
       env: serverEnv,
       reuseExistingServer: false,
