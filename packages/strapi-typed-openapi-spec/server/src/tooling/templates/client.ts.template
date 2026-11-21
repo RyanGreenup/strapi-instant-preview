@@ -393,6 +393,12 @@ type CmsClient = CallOptions & { fetch: typeof globalThis.fetch };
 /** Each client fetch's base URL, so errors can name the full URL. */
 const baseUrls = new WeakMap<typeof globalThis.fetch, string>();
 
+/** The page's URL in a browser; `undefined` elsewhere. */
+const pageUrl = (): string | undefined =>
+  // Typed here, so projects without the DOM types still compile.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  (globalThis as { location?: { href?: string } }).location?.href;
+
 /**
  * Create a CMS client for one server and, optionally, one token. Each client
  * keeps its own settings, so several can run side by side.
@@ -411,16 +417,26 @@ const createCmsClient = (options: {
   /**
    * Abort each request after this many milliseconds (default 10s). A
    * caller's `signal` still applies as well.
+   *
+   * The timeout also applies to writes. If the server finishes a write
+   * after it, the call reports `timeout` for a write that succeeded, and
+   * a user may send it again. Give a client for slow writes (such as a
+   * form that sends an email before answering) a longer timeout.
    */
   timeoutMs?: number;
-  /** The `fetch` to send requests with. Defaults to the global `fetch`. */
+  /**
+   * The `fetch` to send requests with. Defaults to the global `fetch`,
+   * looked up for each request, so a polyfill or test stub installed after
+   * the client was created is still used.
+   */
   fetch?: typeof globalThis.fetch;
 }): CmsClient => {
   let baseUrl = String(options.baseUrl);
   while (baseUrl.endsWith("/")) {
     baseUrl = baseUrl.slice(0, -1);
   }
-  const send = options.fetch ?? globalThis.fetch;
+  const send: typeof globalThis.fetch =
+    options.fetch ?? (async (input, init) => await globalThis.fetch(input, init));
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   // Async, so a bad path rejects like any other failed fetch.
@@ -441,18 +457,30 @@ const createCmsClient = (options: {
         new TypeError("A path parameter is empty, `.` or `..`"),
       );
     }
-    const headers = new Headers(init?.headers);
-    if (!headers.has("accept")) {
-      headers.set("accept", "application/json");
-    }
-    if (options.token !== undefined && !headers.has("authorization")) {
-      headers.set("authorization", `Bearer ${options.token}`);
+    const url = `${baseUrl}${input}`;
+    // A bad base URL or header value (such as a token with a line break) is
+    // the caller's mistake, not the network's: report it before sending.
+    let headers: Headers;
+    try {
+      // In a browser, a relative base URL resolves against the page.
+      if (!URL.canParse(url, pageUrl())) {
+        throw new TypeError(`Invalid URL: ${url}`);
+      }
+      headers = new Headers(init?.headers);
+      if (!headers.has("accept")) {
+        headers.set("accept", "application/json");
+      }
+      if (options.token !== undefined && !headers.has("authorization")) {
+        headers.set("authorization", `Bearer ${options.token}`);
+      }
+    } catch (cause) {
+      throw new InvalidRequestError({ url, method }, cause);
     }
     const timeout = AbortSignal.timeout(timeoutMs);
     const signal = init?.signal
       ? AbortSignal.any([init.signal, timeout])
       : timeout;
-    return await send(`${baseUrl}${input}`, { ...init, headers, signal });
+    return await send(url, { ...init, headers, signal });
   };
   baseUrls.set(fetch, baseUrl);
 
@@ -572,6 +600,7 @@ async function call(
     method: info?.method ?? "GET",
   };
   let sent = false;
+  let responded = false;
   let signal: AbortSignal | null | undefined;
   let statusText = "";
   let status: number | undefined;
@@ -583,7 +612,16 @@ async function call(
     };
     signal = init?.signal;
     sent = true;
-    const response = await send(input, init);
+    let response: Response;
+    try {
+      response = await send(input, init);
+    } catch (cause) {
+      // Classify here, where it is certain: only a failed send is a
+      // transport error.
+      if (cause instanceof CmsErrorBase) throw cause;
+      throw transportError(context, signal, cause);
+    }
+    responded = true;
     context = { ...context, url: response.url || context.url };
     statusText = response.statusText;
     status = response.status;
@@ -600,10 +638,15 @@ async function call(
     if (cause instanceof CmsErrorBase) return err(cause);
     // Orval builds the URL and body before calling fetch.
     if (!sent) return err(new InvalidRequestError(context, cause));
-    if (cause instanceof SyntaxError) {
-      return err(new JsonParseError(context, status, cause));
+    // After the response arrived, the body is read and parsed. A
+    // SyntaxError there is the JSON; anything else broke the body stream.
+    if (responded) {
+      if (cause instanceof SyntaxError) {
+        return err(new JsonParseError(context, status, cause));
+      }
+      return err(transportError(context, signal, cause));
     }
-    return err(transportError(context, signal, cause));
+    return err(new UnexpectedError(context, cause));
   }
 
   if (response.status < 200 || response.status > 299) {

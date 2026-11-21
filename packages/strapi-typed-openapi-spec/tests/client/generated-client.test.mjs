@@ -305,6 +305,64 @@ test("checkClient names the files that differ from a fresh generation", async ()
   }
 }, 60_000);
 
+test("a bad base URL or token is refused before any request", async () => {
+  let calls = 0;
+  const count = async (input, init) => {
+    calls += 1;
+    return fetch(input, init);
+  };
+  const find = (options) =>
+    checked
+      .bindClient(checked.createCmsClient({ fetch: count, ...options }), {
+        find: checked.apiArticleArticleFind,
+      })
+      .find();
+
+  // Outside a browser, a relative base URL has nothing to resolve against.
+  const relative = await find({ baseUrl: "/content" });
+  expect(relative.error.kind).toBe("invalid-request");
+  expect(relative.error.url).toBe("/content/articles");
+
+  const token = await find({ baseUrl, token: "line\nbreak" });
+  expect(token.error.kind).toBe("invalid-request");
+  expect(token.error.method).toBe("GET");
+  expect(calls).toBe(0);
+});
+
+test("the global fetch is looked up per request, not at creation", async () => {
+  const client = checked.createCmsClient({ baseUrl, token });
+  const original = globalThis.fetch;
+  let stubbed = 0;
+  globalThis.fetch = async (input, init) => {
+    stubbed += 1;
+    return original(input, init);
+  };
+  try {
+    const result = await checked
+      .bindClient(client, { find: checked.apiArticleArticleFind })
+      .find();
+    expect(result.ok).toBe(true);
+    expect(stubbed).toBe(1);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("a failure reading the body is a transport error, not JSON", async () => {
+  const broken = async () =>
+    new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.error(new TypeError("connection reset"));
+        },
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  const result = await bind(checked, { fetch: broken }).find();
+  expect(result.error.kind).toBe("network");
+  expect(result.error.cause.message).toBe("connection reset");
+});
+
 test("the generated client and its types compile", async () => {
   const tsgo = join(import.meta.dirname, "../../node_modules/.bin/tsgo");
   const project = join(import.meta.dirname, "tsconfig.generated.json");
