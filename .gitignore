@@ -46,3 +46,12 @@ apps/strapi-instant-preview-example/.tmp/e2e
 .serena
 apps/strapi-instant-preview-example/public
 .codegraph
+.agents
+
+# Agent and tooling files
+.agents
+.claude
+agents.md
+AGENTS.md
+CLAUDE.md
+__pycache__
