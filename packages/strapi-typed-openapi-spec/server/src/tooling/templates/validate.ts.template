@@ -1,6 +1,7 @@
 import { Compile, type Validator as Compiled, type XSchema } from "typebox/schema";
 
 import {
+  annotate,
   type CmsOperation,
   type ValidationIssue,
   type Validator,
@@ -17,6 +18,50 @@ function pathOf(pointer: string): PropertyKey[] {
     .map((part) => (/^\d+$/u.test(part) ? Number(part) : part));
 }
 
+/** The component the contract uses for a relation sent as `{ count }`. */
+const RELATION_COUNT = "StrapiCount";
+
+/**
+ * A copy of a schema in which no relation may be a count: each `anyOf`
+ * loses its `StrapiCount` branch, and an `anyOf` left with one branch
+ * becomes that branch.
+ */
+function withoutCounts(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(withoutCounts);
+  if (node === null || typeof node !== "object") return node;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    out[key] =
+      key === "anyOf" && Array.isArray(value)
+        ? value
+            .filter(
+              (branch) =>
+                // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+                (branch as { $ref?: unknown } | null)?.$ref !== RELATION_COUNT,
+            )
+            .map(withoutCounts)
+        : withoutCounts(value);
+  }
+  const branches = out["anyOf"];
+  if (
+    Array.isArray(branches) &&
+    branches.length === 1 &&
+    Object.keys(out).length === 1
+  ) {
+    return branches[0];
+  }
+  return out;
+}
+
+/** The component schemas without counts, built on first use. */
+let populatedDefs: Record<string, object> | undefined;
+const definitions = (populated: boolean): Record<string, object> => {
+  if (!populated) return $defs;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  populatedDefs ??= withoutCounts($defs) as Record<string, object>;
+  return populatedDefs;
+};
+
 /**
  * Give an operation the contract's JSON Schemas for its 2xx bodies, keyed by
  * status. Returns a copy: the operation itself stays unchecked.
@@ -29,15 +74,20 @@ export const withSchemas = <Op extends CmsOperation>(
   operation: Op,
   schemas: Readonly<Record<number, object>>,
 ): Op => {
-  const compiled = new Map<number, Compiled>();
-  const validate: Validator = (status, data) => {
+  const compiled = new Map<string, Compiled>();
+  const validate: Validator = (status, data, populated) => {
     const schema = schemas[status];
     if (schema === undefined) return undefined;
-    let validator = compiled.get(status);
+    const key = `${status}:${populated}`;
+    let validator = compiled.get(key);
     if (validator === undefined) {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      validator = Compile($defs as Record<string, XSchema>, schema as XSchema);
-      compiled.set(status, validator);
+      validator = Compile(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        definitions(populated) as Record<string, XSchema>,
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        (populated ? withoutCounts(schema) : schema) as XSchema,
+      );
+      compiled.set(key, validator);
     }
     if (validator.Check(data)) return { success: true, data };
     const [, errors] = validator.Errors(data);
@@ -51,9 +101,5 @@ export const withSchemas = <Op extends CmsOperation>(
       .join("; ");
     return { success: false, error: { message, issues } };
   };
-  // `bind` keeps `length`, which `bindClient` uses to find the options slot.
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  return Object.assign(operation.bind(undefined), {
-    [validatorKey]: validate,
-  }) as unknown as Op;
+  return annotate(operation, { [validatorKey]: validate });
 };

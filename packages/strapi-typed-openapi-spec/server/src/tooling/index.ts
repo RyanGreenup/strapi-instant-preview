@@ -1,4 +1,4 @@
-export { generateClient } from "./client";
+export { checkClient, generateClient } from "./client";
 export {
   auditContract,
   checkContract,

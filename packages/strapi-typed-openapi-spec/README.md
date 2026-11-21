@@ -30,6 +30,15 @@ The command boots the app and generates TypeScript from its current routes and
 schemas. The frontend only needs `fetch` and the generated API client is
 tree-shakeable [^252f10c].
 
+The generator owns every file in the output folder, so do not edit them: the
+next run replaces them. To check in CI that a committed client still matches the
+app, run the same command with `--check`. It generates into a temporary folder,
+changes nothing, and fails with the names of the files that differ:
+
+```sh
+pnpm exec openapi-contract client --out ../frontend/src/cms-client --check
+```
+
 [^252f10c]:
     This is why the call-site must use `bindClient`, if this was automated the
     whole API Client would be pulled in if much of it was unused.
@@ -78,8 +87,34 @@ Bound methods never throw or reject. Each call resolves to
 | `timeout`         | `timeoutMs` (default 10 seconds) elapsed.      |
 | `aborted`         | The caller's `signal` aborted the request.     |
 | `network`         | No response arrived.                           |
-| `invalid-request` | The request could not be built.                |
+| `invalid-request` | The request could not be built or was refused. |
 | `unexpected`      | Anything else, such as a validator that threw. |
+
+Options passed to one call are merged over the client's. An option set to
+`undefined` is ignored, so `{ ...options, fetch: undefined }` keeps the client's
+`fetch`, and with it the base URL, token and timeout.
+
+Path parameters are encoded with `encodeURIComponent`, so an ID cannot add path
+segments or a query string. The client refuses an empty ID, `.` or `..` before
+it sends anything: an empty ID would reach a different route (`/articles/` is
+the list) and a dot segment would climb out of the API root. An error raised
+before the request is sent names the operation by its method and path template,
+such as `PUT /articles/{id}`.
+
+#### Relation counts
+
+Strapi answers `populate[key][count]=true` with `{ count }` instead of the
+related entries, so every relation's type includes that shape. If no query asks
+for counts, bind with `populated: true`. A body that holds a count then fails
+validation, and the types leave counts out:
+
+```ts
+const cms = bindClient(
+  connection,
+  { articles: apiArticleArticleFind },
+  { populated: true },
+);
+```
 
 #### Response validation
 
@@ -106,6 +141,7 @@ Strapi's Zod schema which is used in the routes.
 
 ```ts
 import {
+  checkClient,
   generateClient,
   loadContract,
   writeContract,
@@ -117,6 +153,8 @@ const warnings = await generateClient(
   contract.document,
   "./frontend/src/cms-client",
 );
+// [] when the committed client matches, else the files that differ.
+const stale = await checkClient(contract.document, "./frontend/src/cms-client");
 ```
 
 The same entry point exports `checkContract`, `probeContract`, and

@@ -1,8 +1,10 @@
+import { execFile } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { afterAll, beforeAll, expect, test } from "vitest";
 
 // Generates a client from the fixture app's contract and calls the live app
@@ -11,10 +13,13 @@ import { afterAll, beforeAll, expect, test } from "vitest";
 
 const require = createRequire(import.meta.url);
 const { bootTestApp } = require("../../dist/server/src/testing/index.js");
-const { generateClient } = require("../../dist/server/src/tooling/index.js");
+const {
+  checkClient,
+  generateClient,
+} = require("../../dist/server/src/tooling/index.js");
 
 const appDir = join(import.meta.dirname, "../fixture-app");
-// Inside the package, so the client resolves zod from its node_modules.
+// Inside the package, so the client resolves TypeBox from its node_modules.
 const output = join(import.meta.dirname, "../.tmp/generated-client-test");
 const password = "fixture-password-only!";
 
@@ -22,8 +27,10 @@ let app;
 let databaseDir;
 let baseUrl;
 let token;
+let spec;
 let checked;
 let unchecked;
+let raw;
 let warnings;
 
 beforeAll(async () => {
@@ -43,15 +50,17 @@ beforeAll(async () => {
     .send({ username: "client", email: "client@example.test", password })
     .expect(200);
   token = registration.body.jwt;
-  const spec = await app.request
+  const response = await app.request
     .get("/content/openapi-contract/spec.json")
     .set("authorization", `Bearer ${token}`)
     .expect(200);
+  spec = response.body;
 
   await rm(output, { recursive: true, force: true });
-  warnings = await generateClient(spec.body, output);
+  warnings = await generateClient(spec, output);
   checked = await import(join(output, "index.ts"));
   unchecked = await import(join(output, "unchecked.ts"));
+  raw = await import(join(output, "generated/cms.ts"));
 }, 120_000);
 
 afterAll(async () => {
@@ -180,3 +189,129 @@ test("a non-JSON body that claims to be JSON is a JsonParseError", async () => {
   expect(result.error.kind).toBe("json-parse");
   expect(result.error.status).toBe(200);
 });
+
+test("an option set to undefined keeps the client's own", async () => {
+  // A spread `fetch: undefined` would drop the base URL and token.
+  const result = await bind(checked).find(undefined, { fetch: undefined });
+  expect(result.ok).toBe(true);
+});
+
+test("each operation carries its method, path and options position", () => {
+  const key = Symbol.for("cms-client.operation");
+  const described = Object.entries(unchecked).filter(
+    ([, value]) => typeof value === "function" && key in value,
+  );
+  expect(described.length).toBeGreaterThan(0);
+  for (const [name, operation] of described) {
+    const info = operation[key];
+    // Orval's signatures have no defaults today, so `length` agrees.
+    expect(info.optionsIndex, name).toBe(raw[name].length - 1);
+    expect(info.method, name).toMatch(/^[A-Z]+$/u);
+    expect(info.path, name).toMatch(/^\//u);
+    // The validated copy keeps the same information.
+    if (name in checked) expect(checked[name][key], name).toEqual(info);
+  }
+});
+
+test("path parameters are encoded into one segment", async () => {
+  const result = await bind(checked).findOne("a/b?c");
+  expect(result.error.kind).toBe("http");
+  expect(result.error.status).toBe(404);
+  expect(result.error.url).toBe(`${baseUrl}/articles/a%2Fb%3Fc`);
+});
+
+test.each(["", ".", ".."])(
+  "the ID %j is refused before any request",
+  async (id) => {
+    let calls = 0;
+    const count = async (input, init) => {
+      calls += 1;
+      return fetch(input, init);
+    };
+    const result = await bind(checked, { fetch: count }).findOne(id);
+    expect(result.error.kind).toBe("invalid-request");
+    expect(calls).toBe(0);
+  },
+);
+
+test("the client's fetch rejects a bad path instead of throwing", async () => {
+  const client = checked.createCmsClient({ baseUrl });
+  for (const path of ["articles", "/articles/..", "/articles//x"]) {
+    const pending = client.fetch(path);
+    expect(pending).toBeInstanceOf(Promise);
+    await expect(pending).rejects.toBeInstanceOf(checked.InvalidRequestError);
+  }
+});
+
+test("an error before sending names the operation", async () => {
+  const cyclic = {};
+  cyclic.self = cyclic;
+  const client = checked.createCmsClient({ baseUrl, token });
+  const bound = checked.bindClient(client, {
+    find: checked.apiArticleArticleFind,
+    update: checked.apiArticleArticleUpdate,
+  });
+
+  const find = await bound.find({ filters: cyclic });
+  expect(find.error.kind).toBe("invalid-request");
+  expect(find.error.method).toBe("GET");
+  expect(find.error.url).toBe(`${baseUrl}/articles`);
+
+  const update = await bound.update("x", { data: {} }, { filters: cyclic });
+  expect(update.error.kind).toBe("invalid-request");
+  expect(update.error.method).toBe("PUT");
+  expect(update.error.url).toBe(`${baseUrl}/articles/{id}`);
+});
+
+test("populated mode rejects a relation count", async () => {
+  const withCount = async (input, init) => {
+    const body = await (await fetch(input, init)).json();
+    const article = { id: 1, documentId: "a00000000000000000000001" };
+    return Response.json({
+      ...body,
+      data: [{ ...article, topic: { count: 2 } }],
+    });
+  };
+  const client = checked.createCmsClient({ baseUrl, token, fetch: withCount });
+  const operations = { find: checked.apiArticleArticleFind };
+
+  const counted = await checked.bindClient(client, operations).find();
+  expect(counted.ok).toBe(true);
+
+  const populated = await checked
+    .bindClient(client, operations, { populated: true })
+    .find();
+  expect(populated.error.kind).toBe("validation");
+  expect(populated.error.issues[0].path).toEqual(["data", 0, "topic"]);
+});
+
+test("checkClient names the files that differ from a fresh generation", async () => {
+  const copy = await mkdtemp(join(tmpdir(), "openapi-contract-check-"));
+  try {
+    await cp(output, copy, { recursive: true });
+    await expect(checkClient(spec, copy)).resolves.toEqual([]);
+
+    await writeFile(join(copy, "client.ts"), "// edited\n");
+    await rm(join(copy, "generated/schemas.ts"));
+    await writeFile(join(copy, "extra.ts"), "");
+    await expect(checkClient(spec, copy)).resolves.toEqual([
+      "client.ts",
+      "extra.ts",
+      "generated/schemas.ts",
+    ]);
+  } finally {
+    await rm(copy, { recursive: true, force: true });
+  }
+}, 60_000);
+
+test("the generated client and its types compile", async () => {
+  const tsgo = join(import.meta.dirname, "../../node_modules/.bin/tsgo");
+  const project = join(import.meta.dirname, "tsconfig.generated.json");
+  let outcome = "";
+  try {
+    await promisify(execFile)(tsgo, ["-p", project]);
+  } catch (error) {
+    outcome = `${error.stdout}${error.stderr}`;
+  }
+  expect(outcome).toBe("");
+}, 120_000);

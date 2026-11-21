@@ -287,10 +287,47 @@ type CmsData<
   Status extends CmsResponse<Op>["status"] = 200,
 > = Extract<CmsResponse<Op>, { status: Status }>["data"];
 
-/** Checks a body for one status. `undefined` means no schema to check. */
+/** A relation that Strapi sent as `{ count }` instead of its entries. */
+interface RelationCount {
+  count: number;
+}
+
+/** True only for exactly `{ count: number }`, not for an entry with a count field. */
+type IsRelationCount<Value> = Value extends RelationCount
+  ? Exclude<keyof Value, "count"> extends never
+    ? true
+    : false
+  : false;
+
+/**
+ * A response body with relation counts removed from every relation's type.
+ * Strapi sends `{ count }` only when a query asks for it, so a caller that
+ * never does can bind with `{ populated: true }` and get this type.
+ *
+ * Only a union member that is exactly `{ count: number }` is removed, so an
+ * entry with its own `count` field keeps it.
+ */
+type Populated<Value> = Value extends unknown
+  ? IsRelationCount<Value> extends true
+    ? never
+    : Value extends object
+      ? { [Key in keyof Value]: Populated<Value[Key]> }
+      : Value
+  : never;
+
+/** A 2xx response whose `data` is {@link Populated}. */
+type PopulatedSuccess<Response> = Response extends { data: infer Data }
+  ? Omit<Response, "data"> & { data: Populated<Data> }
+  : Response;
+
+/**
+ * Checks a body for one status. `undefined` means no schema to check. With
+ * `populated`, a relation count fails the check.
+ */
 type Validator = (
   status: number,
   data: unknown,
+  populated: boolean,
 ) =>
   | { success: true; data: unknown }
   | {
@@ -301,6 +338,47 @@ type Validator = (
 
 /** Where validated operations keep their {@link Validator}. */
 const validatorKey = Symbol.for("cms-client.validator");
+
+/** What the generator knows about one operation, for {@link bindClient}. */
+interface OperationInfo {
+  /** The HTTP method, in upper case. */
+  readonly method: string;
+  /** The contract's path template, such as `/articles/{id}`. */
+  readonly path: string;
+  /** The position of the trailing `CallOptions` parameter. */
+  readonly optionsIndex: number;
+}
+
+/** Where generated operations keep their {@link OperationInfo}. */
+const operationKey = Symbol.for("cms-client.operation");
+
+/**
+ * Copy an operation with extra properties.
+ *
+ * Extra properties may include e.g. its {@link OperationInfo} or {@link
+ * Validator}. Properties already on the operation are kept and the original
+ * operation is not changed.
+ */
+const annotate = <Op extends CmsOperation>(
+  operation: Op,
+  properties: Readonly<Record<symbol, unknown>>,
+): Op => {
+  const copy = (...args: never[]): ReturnType<Op> =>
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    Reflect.apply(operation, undefined, args) as ReturnType<Op>;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return Object.assign(copy, operation, properties) as unknown as Op;
+};
+
+/** Give an operation its generated {@link OperationInfo}. */
+const describeOperation = <Op extends CmsOperation>(
+  operation: Op,
+  info: OperationInfo,
+): Op => annotate(operation, { [operationKey]: info });
+
+/** An empty path segment, or one that resolves to `.` or `..`. */
+const isUnsafeSegment = (segment: string): boolean =>
+  segment === "" || /^(?:\.|%2e){1,2}$/iu.test(segment);
 
 /**
  * A configured CMS connection. Pass it to {@link bindClient}, or as the
@@ -345,11 +423,22 @@ const createCmsClient = (options: {
   const send = options.fetch ?? globalThis.fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-  const fetch: typeof globalThis.fetch = (input, init) => {
+  // Async, so a bad path rejects like any other failed fetch.
+  const fetch: typeof globalThis.fetch = async (input, init) => {
+    const method = (init?.method ?? "GET").toUpperCase();
     if (typeof input !== "string" || !input.startsWith("/")) {
       throw new InvalidRequestError(
-        { url: String(input), method: init?.method ?? "GET" },
+        { url: String(input), method },
         new TypeError("Expected a CMS operation path starting with /"),
+      );
+    }
+    // An empty ID would reach a different route (`/articles/` is the list),
+    // and `.` or `..` would climb out of the API root once the URL is parsed.
+    const [path = ""] = input.split(/[?#]/u, 1);
+    if (path.split("/").slice(1).some(isUnsafeSegment)) {
+      throw new InvalidRequestError(
+        { url: `${baseUrl}${input}`, method },
+        new TypeError("A path parameter is empty, `.` or `..`"),
       );
     }
     const headers = new Headers(init?.headers);
@@ -363,7 +452,7 @@ const createCmsClient = (options: {
     const signal = init?.signal
       ? AbortSignal.any([init.signal, timeout])
       : timeout;
-    return send(`${baseUrl}${input}`, { ...init, headers, signal });
+    return await send(`${baseUrl}${input}`, { ...init, headers, signal });
   };
   baseUrls.set(fetch, baseUrl);
 
@@ -374,13 +463,31 @@ const createCmsClient = (options: {
  * Operations bound by {@link bindClient}: same parameters, but each call
  * resolves to a `Result` and never throws or rejects.
  */
-type BoundOperations<Operations extends Record<string, CmsOperation>> = {
+type BoundOperations<
+  Operations extends Record<string, CmsOperation>,
+  IsPopulated extends boolean = false,
+> = {
   [K in keyof Operations]: (
     ...args: Parameters<Operations[K]>
   ) => Promise<
-    Result<CmsSuccess<Operations[K]>, CmsError<Operations[K]>>
+    Result<
+      IsPopulated extends true
+        ? PopulatedSuccess<CmsSuccess<Operations[K]>>
+        : CmsSuccess<Operations[K]>,
+      CmsError<Operations[K]>
+    >
   >;
 };
+
+/** Options for {@link bindClient}. */
+interface BindOptions<IsPopulated extends boolean = false> {
+  /**
+   * Treat a relation sent as `{ count }` as invalid, and type every
+   * relation without it (see {@link Populated}). Use this when no query
+   * asks for counts (`populate[key][count]=true`).
+   */
+  populated?: IsPopulated;
+}
 
 /**
  * Bind operations to a client, so they can be called as methods:
@@ -409,41 +516,61 @@ type BoundOperations<Operations extends Record<string, CmsOperation>> = {
  * TypeBox is then left out of the bundle.
  *
  * Pass only the operations you use: bundlers keep exactly those. Options
- * given in a call are merged over the client's.
+ * given in a call are merged over the client's, except those set to
+ * `undefined`: `{ fetch: undefined }` keeps the client's fetch, and with it
+ * the base URL and token.
  *
  * @param client - The client from {@link createCmsClient}.
  * @param operations - The operations to bind, keyed by the method names to
  *   give them.
+ * @param options - See {@link BindOptions}.
  * @returns The bound operations.
  */
-const bindClient = <Operations extends Record<string, CmsOperation>>(
+const bindClient = <
+  Operations extends Record<string, CmsOperation>,
+  IsPopulated extends boolean = false,
+>(
   client: CmsClient,
   operations: Operations,
-): BoundOperations<Operations> =>
+  options: BindOptions<IsPopulated> = {},
+): BoundOperations<Operations, IsPopulated> =>
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   Object.fromEntries(
     Object.entries(operations).map(([name, operation]) => [
       name,
-      (...args: unknown[]) => call(client, operation, args),
+      (...args: unknown[]) =>
+        call(client, operation, args, options.populated === true),
     ]),
-  ) as unknown as BoundOperations<Operations>;
+  ) as unknown as BoundOperations<Operations, IsPopulated>;
+
+/** The defined values of a per-call options argument. */
+function definedOptions(given: unknown): Partial<CallOptions> {
+  if (typeof given !== "object" || given === null) return {};
+  return Object.fromEntries(
+    Object.entries(given).filter(([, value]) => value !== undefined),
+  );
+}
 
 async function call(
   client: CmsClient,
   operation: CmsOperation,
   args: unknown[],
+  populated: boolean,
 ): Promise<Result<unknown, unknown>> {
-  // Orval emits an optional trailing CallOptions parameter.
-  const slot = Math.max(operation.length - 1, 0);
-  const given = args[slot];
-  const options: CallOptions = {
-    ...client,
-    ...(typeof given === "object" && given !== null ? given : {}),
-  };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const info = (operation as { [operationKey]?: OperationInfo })[operationKey];
+  // Without generated info (a hand-written operation), assume the options
+  // come last. `length` stops counting at a default or rest parameter.
+  const slot = info?.optionsIndex ?? Math.max(operation.length - 1, 0);
+  const options: CallOptions = { ...client, ...definedOptions(args[slot]) };
 
-  // Record what was sent, so every error can name the request.
+  // Record what was sent, so every error can name the request. Until the
+  // operation builds its URL, name its path template.
   const send = options.fetch ?? globalThis.fetch;
-  let context: RequestContext = { url: "", method: "GET" };
+  let context: RequestContext = {
+    url: info === undefined ? "" : `${baseUrls.get(send) ?? ""}${info.path}`,
+    method: info?.method ?? "GET",
+  };
   let sent = false;
   let signal: AbortSignal | null | undefined;
   let statusText = "";
@@ -487,7 +614,7 @@ async function call(
   const validate = (operation as { [validatorKey]?: Validator })[validatorKey];
   if (validate === undefined) return ok(response);
   try {
-    const checked = validate(response.status, response.data);
+    const checked = validate(response.status, response.data, populated);
     if (checked === undefined) return ok(response);
     return checked.success
       ? ok({ ...response, data: checked.data })
@@ -505,9 +632,11 @@ async function call(
 }
 
 export {
+  annotate,
   bindClient,
   CmsErrorBase,
   createCmsClient,
+  describeOperation,
   err,
   FetchAbortedError,
   FetchTimeoutError,
@@ -516,9 +645,11 @@ export {
   JsonParseError,
   NetworkError,
   ok,
+  operationKey,
   UnexpectedError,
   ValidationError,
   validatorKey,
+  type BindOptions,
   type BoundOperations,
   type CmsClient,
   type CmsData,
@@ -526,6 +657,9 @@ export {
   type CmsOperation,
   type CmsResponse,
   type CmsSuccess,
+  type OperationInfo,
+  type Populated,
+  type RelationCount,
   type Result,
   type ValidationIssue,
   type Validator,

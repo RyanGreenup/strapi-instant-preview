@@ -1,0 +1,16 @@
+// Type-checks the client that generated-client.test.mjs writes, with the
+// assertions in generated-types.ts. The templates are only compiled here.
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["ES2024", "DOM"],
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true
+  },
+  "include": ["../.tmp/generated-client-test/**/*.ts", "generated-types.ts"]
+}

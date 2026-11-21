@@ -10,8 +10,8 @@
  * was used in the browser.
  *
  * @param params - The query parameter object of one operation. Keys with an
- *   `undefined` value are left out, as are functions and symbols. Dates are
- *   sent as ISO 8601 strings.
+ *   `undefined` value are left out, as are functions and symbols. `null` is
+ *   sent as an empty value. Dates are sent as ISO 8601 strings.
  * @returns The encoded query string, without a leading `?`.
  * @throws {TypeError} If a value contains itself.
  * @throws {RangeError} If a date is invalid.
@@ -27,6 +27,7 @@ const serializeStrapiQuery = (params?: object): string => {
       return;
     }
     if (value === null) {
+      // As `qs` does by default: Strapi would read `=null` as the string "null".
       pairs.push(`${prefix}=`);
       return;
     }

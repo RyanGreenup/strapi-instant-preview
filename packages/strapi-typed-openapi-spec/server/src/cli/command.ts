@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 import {
   auditContract,
+  checkClient,
   checkContract,
   generateClient,
   loadContract,
@@ -100,6 +101,12 @@ const client = defineCommand({
       default: "cms-client",
       description: "Client output directory",
     },
+    check: {
+      type: "boolean",
+      default: false,
+      description:
+        "Compare the client in --out with a fresh generation, and change nothing",
+    },
   },
   setup: checkOptions,
   async run({ args }) {
@@ -108,6 +115,16 @@ const client = defineCommand({
       config: args.config,
     });
     const output = resolve(args.out);
+    if (args.check) {
+      const stale = await checkClient(document, output);
+      if (stale.length > 0) {
+        throw new Error(
+          `Client in ${output} is out of date: ${stale.join(", ")}`,
+        );
+      }
+      console.log(`Client in ${output} matches the contract`);
+      return;
+    }
     const warnings = await generateClient(document, output);
     for (const warning of warnings) console.warn(warning);
     console.log(`Wrote client to ${output}`);
