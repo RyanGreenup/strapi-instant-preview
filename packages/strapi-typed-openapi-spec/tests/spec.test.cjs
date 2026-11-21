@@ -398,6 +398,66 @@ test("draft-and-publish writes name the response schema for each status", async 
   validate(update.schemas.published, updated.body);
 });
 
+test("a single type's PUT names its create and update bodies", () => {
+  const operation = document.paths["/landing-page"].put;
+  const write = operation["x-strapi-single-type-write"];
+  assert.equal(write.condition, "document exists");
+  assert.equal(write.statusParameter, undefined);
+  const partial = { data: { introduction: { quotation: "Partial" } } };
+  const complete = { data: { headline: "Hello", ...partial.data } };
+  assert.equal(documentValidator(write.create)(partial), false);
+  assert.equal(documentValidator(write.create)(complete), true);
+  assert.equal(documentValidator(write.update)(partial), true);
+  // The standard body stays broad enough for an existing document.
+  const content = operation.requestBody.content["application/json"];
+  assert.equal(documentValidator(content.schema)(partial), true);
+  assert.match(operation.requestBody.description, /none exists/);
+  assert.equal(
+    documentValidator(write.create)(content.examples.create.value),
+    true,
+  );
+  assert.equal(
+    documentValidator(write.update)(content.examples.update.value),
+    true,
+  );
+  assert.equal(
+    document.paths["/topics/{id}"].put["x-strapi-single-type-write"],
+    undefined,
+  );
+});
+
+test("a relation offers a count only where its database storage can send one", () => {
+  const { schemas } = document.components;
+  const named = (schema) => schemas[schema.$ref.split("/").pop()];
+  const response = named(
+    document.paths["/articles/{id}"].get["x-strapi-response-status"].schemas
+      .published,
+  );
+  const property = (name) =>
+    JSON.stringify(named(response.properties.data).properties[name]);
+  assert.match(property("topic"), /StrapiCount/);
+  assert.doesNotMatch(property("leadTopic"), /StrapiCount/);
+  const populate = document.paths["/articles/{id}"].get.parameters.find(
+    (parameter) => parameter.name === "populate",
+  );
+  assert.match(populate.schema.description, /api::article\.article\.leadTopic/);
+  assert.match(populate.schema.description, /permission/);
+  const count = documentValidator({ $ref: "#/components/schemas/StrapiCount" });
+  assert.equal(count({ count: 2 }), true);
+  assert.equal(count({ count: -1 }), false);
+  assert.equal(count({ count: 1.5 }), false);
+});
+
+test("numeric inputs stay numbers and describe Strapi's string coercion", () => {
+  const input = document.components.schemas.ArticleInput.properties.quantity;
+  const json = JSON.stringify(input);
+  assert.match(json, /"type":"integer"/);
+  assert.match(json, /"maximum":100/);
+  assert.doesNotMatch(json, /"type":"string"/);
+  assert.match(json, /x-strapi-coerces-numeric-string/);
+  assert.match(json, /numeric string/);
+});
+
 test("a dynamic zone never has a count branch because Strapi ignores count there", async () => {
   const sections = (schema) =>
     JSON.stringify(

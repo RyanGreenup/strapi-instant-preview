@@ -22,6 +22,8 @@ type QueryModel = {
   filters?: (uid: string) => JSONSchema;
   sort?: (uid: string) => JSONSchema;
   exactUpstream?: boolean;
+  /** `owner.key` of relations that never answer `count` (join-column storage). */
+  countless?: readonly string[];
 };
 
 function isSchema(value: unknown): value is JSONSchema {
@@ -274,8 +276,15 @@ function modelQuery(
         : derived;
     },
     populate: (schema: JSONSchema): JSONSchema => ({
-      description:
+      description: [
         "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+        "Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target.",
+        ...(source.countless?.length
+          ? [
+              `\`count\` returns { count } only for relations stored in a join table. For ${source.countless.join(", ")} Strapi ignores \`count\` and returns the related document or null.`,
+            ]
+          : []),
+      ].join(" "),
       anyOf: [
         source.exactUpstream ? schema : wildcard,
         ...dottedPopulate(source.uid),

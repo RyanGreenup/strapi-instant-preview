@@ -133,7 +133,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -150,6 +150,7 @@
                         "cover",
                         "attachments",
                         "topic",
+                        "leadTopic",
                         "topics",
                         "relatedArticles",
                         "notes",
@@ -166,6 +167,7 @@
                           "cover",
                           "attachments",
                           "topic",
+                          "leadTopic",
                           "topics",
                           "relatedArticles",
                           "notes",
@@ -179,13 +181,13 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                 },
                 {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                   }
                 },
                 {
@@ -401,7 +403,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -418,6 +420,7 @@
                         "cover",
                         "attachments",
                         "topic",
+                        "leadTopic",
                         "topics",
                         "relatedArticles",
                         "notes",
@@ -434,6 +437,7 @@
                           "cover",
                           "attachments",
                           "topic",
+                          "leadTopic",
                           "topics",
                           "relatedArticles",
                           "notes",
@@ -447,13 +451,13 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                 },
                 {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                   }
                 },
                 {
@@ -712,7 +716,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -729,6 +733,7 @@
                         "cover",
                         "attachments",
                         "topic",
+                        "leadTopic",
                         "topics",
                         "relatedArticles",
                         "notes",
@@ -745,6 +750,7 @@
                           "cover",
                           "attachments",
                           "topic",
+                          "leadTopic",
                           "topics",
                           "relatedArticles",
                           "notes",
@@ -758,13 +764,13 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                 },
                 {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                   }
                 },
                 {
@@ -1087,7 +1093,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -1243,7 +1249,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -1429,7 +1435,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -1475,6 +1481,27 @@
             "explode": true
           }
         ],
+        "x-strapi-single-type-write": {
+          "condition": "document exists",
+          "create": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/LandingPageInput"
+              }
+            },
+            "required": ["data"]
+          },
+          "update": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/LandingPageUpdateInput"
+              }
+            },
+            "required": ["data"]
+          }
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -1487,9 +1514,30 @@
                   }
                 },
                 "required": ["data"]
+              },
+              "examples": {
+                "create": {
+                  "summary": "No document exists yet: send every required field",
+                  "value": {
+                    "data": {
+                      "headline": "Example"
+                    }
+                  }
+                },
+                "update": {
+                  "summary": "The document exists: send only the fields to change",
+                  "value": {
+                    "data": {
+                      "introduction": {
+                        "quotation": "Example"
+                      }
+                    }
+                  }
+                }
               }
             }
-          }
+          },
+          "description": "Creates the document when none exists, so the body must then match the create schema (every required field). When the document exists, it is updated and a partial body is enough. This schema accepts the update form; JSON Schema cannot check whether the document exists. See x-strapi-single-type-write for both schemas."
         }
       }
     },
@@ -1600,7 +1648,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -1780,7 +1828,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -1990,7 +2038,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -2158,7 +2206,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -2335,7 +2383,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -2542,7 +2590,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -2838,7 +2886,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -3546,7 +3594,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -3974,7 +4022,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -3991,6 +4039,7 @@
                         "cover",
                         "attachments",
                         "topic",
+                        "leadTopic",
                         "topics",
                         "relatedArticles",
                         "notes",
@@ -4007,6 +4056,7 @@
                           "cover",
                           "attachments",
                           "topic",
+                          "leadTopic",
                           "topics",
                           "relatedArticles",
                           "notes",
@@ -4020,13 +4070,13 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                 },
                 {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                   }
                 },
                 {
@@ -4234,7 +4284,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -4251,6 +4301,7 @@
                         "cover",
                         "attachments",
                         "topic",
+                        "leadTopic",
                         "topics",
                         "relatedArticles",
                         "notes",
@@ -4267,6 +4318,7 @@
                           "cover",
                           "attachments",
                           "topic",
+                          "leadTopic",
                           "topics",
                           "relatedArticles",
                           "notes",
@@ -4280,13 +4332,13 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                  "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                 },
                 {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent)))*\\s*$"
+                    "pattern": "^\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))(?:\\s*,\\s*(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent)))*\\s*$"
                   }
                 },
                 {
@@ -6084,7 +6136,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -6243,7 +6295,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -6455,7 +6507,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -6611,7 +6663,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "anyOf": [
@@ -6802,7 +6854,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -7054,7 +7106,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -7105,6 +7157,452 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/StrapiQueryFilter_Model_plugin_3a__3a_upload.fileInput"
+            },
+            "style": "deepObject",
+            "explode": true
+          }
+        ]
+      }
+    },
+    "/upload/folders": {
+      "get": {
+        "operationId": "plugin.upload.folder.find",
+        "tags": ["upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-z0-9]{23}$"
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "path": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Folder path made of numeric path IDs."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          "namePath": {
+                            "type": "string",
+                            "description": "Folder path made of folder names."
+                          },
+                          "parent": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "documentId": {
+                                    "type": "string",
+                                    "pattern": "^[a-z][a-z0-9]{23}$"
+                                  }
+                                },
+                                "required": ["id", "documentId"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "documentId",
+                          "name",
+                          "path",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "pagination": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "page": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "pageSize": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "pageCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": ["page", "pageSize"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "start": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": ["start", "limit"],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "required": ["pagination"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data", "meta"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError500"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StrapiQuery.Sort.plugin_3a__3a_upload.folderInput"
+            },
+            "style": "deepObject",
+            "explode": true
+          },
+          {
+            "name": "pagination",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StrapiQuery.PaginationInput"
+            },
+            "style": "deepObject",
+            "explode": true
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StrapiQueryFilter_Model_plugin_3a__3a_upload.folderInput"
+            },
+            "style": "deepObject",
+            "explode": true
+          }
+        ]
+      }
+    },
+    "/upload/folders/{id}": {
+      "get": {
+        "operationId": "plugin.upload.folder.findOne",
+        "tags": ["upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "documentId": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9]{23}$"
+                        },
+                        "name": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "path": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Folder path made of numeric path IDs."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        "namePath": {
+                          "type": "string",
+                          "description": "Folder path made of folder names."
+                        },
+                        "parent": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "documentId": {
+                                  "type": "string",
+                                  "pattern": "^[a-z][a-z0-9]{23}$"
+                                }
+                              },
+                              "required": ["id", "documentId"],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "documentId",
+                        "name",
+                        "path",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrapiError500"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^\\x00]+$",
+              "description": "The document ID (documentId), not the numeric row ID."
+            }
+          },
+          {
+            "name": "pagination",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StrapiQuery.PaginationInput"
+            },
+            "style": "deepObject",
+            "explode": true
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StrapiQuery.Sort.plugin_3a__3a_upload.folderInput"
             },
             "style": "deepObject",
             "explode": true
@@ -7229,7 +7727,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -8147,7 +8645,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name.",
+              "description": "Use Strapi bracket syntax for nested population, e.g. populate[category][fields][0]=name. Populating a relation requests it but does not grant permission to read it: Strapi omits the key when the caller lacks `find` permission on the relation's target. `count` returns { count } only for relations stored in a join table. For api::article.article.leadTopic, api::article.article.localizations Strapi ignores `count` and returns the related document or null.",
               "anyOf": [
                 {
                   "type": "string",
@@ -10532,7 +11030,7 @@
               {
                 "type": "integer",
                 "minimum": -9007199254740991,
-                "maximum": 9007199254740991
+                "maximum": 100
               },
               {
                 "type": "null"
@@ -10680,6 +11178,16 @@
               }
             ]
           },
+          "leadTopic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TopicDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "topics": {
             "anyOf": [
               {
@@ -10799,17 +11307,10 @@
           "localizations": {
             "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ArticleDocument"
-                    }
-                  },
-                  {
-                    "$ref": "#/components/schemas/StrapiCount"
-                  }
-                ]
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArticleDocument"
+                }
               },
               {
                 "type": "null"
@@ -10959,7 +11460,7 @@
               {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 9007199254740991
+                "maximum": 100
               },
               {
                 "type": "null"
@@ -11107,6 +11608,16 @@
               }
             ]
           },
+          "leadTopic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TopicDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "topics": {
             "anyOf": [
               {
@@ -11219,17 +11730,10 @@
           "localizations": {
             "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ArticlePublishedDocument"
-                    }
-                  },
-                  {
-                    "$ref": "#/components/schemas/StrapiCount"
-                  }
-                ]
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArticlePublishedDocument"
+                }
               },
               {
                 "type": "null"
@@ -11385,7 +11889,7 @@
               {
                 "type": "integer",
                 "minimum": -9007199254740991,
-                "maximum": 9007199254740991
+                "maximum": 100
               },
               {
                 "type": "null"
@@ -11533,6 +12037,16 @@
               }
             ]
           },
+          "leadTopic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TopicDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "topics": {
             "anyOf": [
               {
@@ -11643,17 +12157,10 @@
           "localizations": {
             "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ArticleDraftDocument"
-                    }
-                  },
-                  {
-                    "$ref": "#/components/schemas/StrapiCount"
-                  }
-                ]
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArticleDraftDocument"
+                }
               },
               {
                 "type": "null"
@@ -12179,6 +12686,24 @@
             ]
           },
           "topic": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string",
+                    "enum": ["true", "false", "t", "f", "1", "0"]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/components/schemas/StrapiPopulateOptions.api-3a--3a-topic.topic"
+              }
+            ]
+          },
+          "leadTopic": {
             "anyOf": [
               {
                 "anyOf": [
@@ -24366,13 +24891,13 @@
               },
               {
                 "type": "string",
-                "pattern": "^(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))$"
+                "pattern": "^(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))$"
               },
               {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "pattern": "^(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|topics|relatedArticles|notes|sections|localizations)|(?:topic\\.|topics\\.)(?:parent\\.)*parent))$"
+                  "pattern": "^(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:cover|attachments|topic|leadTopic|topics|relatedArticles|notes|sections|localizations)|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*parent))$"
                 }
               },
               {
@@ -27376,6 +27901,9 @@
               "topic": {
                 "$ref": "#/components/schemas/StrapiQueryFilter_Relation_api_3a__3a_topic.topicInput"
               },
+              "leadTopic": {
+                "$ref": "#/components/schemas/StrapiQueryFilter_Relation_api_3a__3a_topic.topicInput"
+              },
               "topics": {
                 "$ref": "#/components/schemas/StrapiQueryFilter_Relation_api_3a__3a_topic.topicInput"
               },
@@ -27576,6 +28104,9 @@
             "$ref": "#/components/schemas/StrapiQueryFilter_Relation_plugin_3a__3a_upload.fileInput"
           },
           "topic": {
+            "$ref": "#/components/schemas/StrapiQueryFilter_Relation_api_3a__3a_topic.topicInput"
+          },
+          "leadTopic": {
             "$ref": "#/components/schemas/StrapiQueryFilter_Relation_api_3a__3a_topic.topicInput"
           },
           "topics": {
@@ -30498,7 +31029,7 @@
       },
       "StrapiQuery.SortPath.api_3a__3a_article.articleInput": {
         "type": "string",
-        "pattern": "^[\\s,]*(?:(?:(?:id|documentId|title|description|legacyRichText|contact|slug|category|quantity|rating|price|hugeNumber|featured|dueDate|scheduledAt|startsAt|settings|eventEpoch|body|color|createdAt|updatedAt|publishedAt|locale)(?::\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC]))?|(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:(?:(?:id|documentId|title|description|legacyRichText|contact|slug|category|quantity|rating|price|hugeNumber|featured|dueDate|scheduledAt|startsAt|settings|eventEpoch|body|color|createdAt|updatedAt|publishedAt|locale)|notes\\.(?:id|message))|(?:topic\\.|topics\\.)(?:parent\\.)*(?:id|documentId|name|createdAt|updatedAt|publishedAt))|(?:cover\\.|attachments\\.)(?:id|documentId|name|alternativeText|caption|focalPoint|width|height|formats|hash|ext|mime|size|url|previewUrl|provider|provider_metadata|createdAt|updatedAt|publishedAt)))(?::(?:[aA][sS][cC]|[dD][eE][sS][cC]))?)\\s*(?:,[\\s,]*|$))*$",
+        "pattern": "^[\\s,]*(?:(?:(?:id|documentId|title|description|legacyRichText|contact|slug|category|quantity|rating|price|hugeNumber|featured|dueDate|scheduledAt|startsAt|settings|eventEpoch|body|color|createdAt|updatedAt|publishedAt|locale)(?::\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC]))?|(?:(?:(?:relatedArticles\\.|localizations\\.))*(?:(?:(?:(?:id|documentId|title|description|legacyRichText|contact|slug|category|quantity|rating|price|hugeNumber|featured|dueDate|scheduledAt|startsAt|settings|eventEpoch|body|color|createdAt|updatedAt|publishedAt|locale)|notes\\.(?:id|message))|(?:(?:topic\\.|leadTopic\\.)|topics\\.)(?:parent\\.)*(?:id|documentId|name|createdAt|updatedAt|publishedAt))|(?:cover\\.|attachments\\.)(?:id|documentId|name|alternativeText|caption|focalPoint|width|height|formats|hash|ext|mime|size|url|previewUrl|provider|provider_metadata|createdAt|updatedAt|publishedAt)))(?::(?:[aA][sS][cC]|[dD][eE][sS][cC]))?)\\s*(?:,[\\s,]*|$))*$",
         "description": "Field or dot path with optional :asc or :desc. Multiple sort keys can be separated by commas."
       },
       "StrapiQuery.SortObject.api_3a__3a_article.articleInput": {
@@ -30607,6 +31138,9 @@
             "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.fileInput"
           },
           "topic": {
+            "$ref": "#/components/schemas/StrapiQuery.SortObject.api_3a__3a_topic.topicInput"
+          },
+          "leadTopic": {
             "$ref": "#/components/schemas/StrapiQuery.SortObject.api_3a__3a_topic.topicInput"
           },
           "topics": {
@@ -31698,6 +32232,81 @@
         ],
         "description": "Sort the result"
       },
+      "StrapiQuery.SortPath.plugin_3a__3a_upload.folderInput": {
+        "type": "string",
+        "pattern": "^[\\s,]*(?:(?:(?:id|documentId|name|pathId|path|createdAt|updatedAt|publishedAt)(?::\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC]))?|(?:(?:(?:parent\\.|children\\.))*(?:(?:id|documentId|name|pathId|path|createdAt|updatedAt|publishedAt)|files\\.(?:id|documentId|name|alternativeText|caption|focalPoint|width|height|formats|hash|ext|mime|size|url|previewUrl|provider|provider_metadata|createdAt|updatedAt|publishedAt)))(?::(?:[aA][sS][cC]|[dD][eE][sS][cC]))?)\\s*(?:,[\\s,]*|$))*$",
+        "description": "Field or dot path with optional :asc or :desc. Multiple sort keys can be separated by commas."
+      },
+      "StrapiQuery.SortObject.plugin_3a__3a_upload.folderInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "documentId": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "pathId": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "createdAt": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "publishedAt": {
+            "type": "string",
+            "pattern": "^\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC])\\s*$"
+          },
+          "parent": {
+            "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.folderInput"
+          },
+          "children": {
+            "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.folderInput"
+          },
+          "files": {
+            "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.fileInput"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StrapiQuery.Sort.plugin_3a__3a_upload.folderInput": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/StrapiQuery.SortPath.plugin_3a__3a_upload.folderInput"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrapiQuery.SortPath.plugin_3a__3a_upload.folderInput"
+            }
+          },
+          {
+            "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.folderInput"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrapiQuery.SortObject.plugin_3a__3a_upload.folderInput"
+            }
+          }
+        ],
+        "description": "Sort the result"
+      },
       "StrapiQuery.SortPath.plugin_3a__3a_users-permissions.userInput": {
         "type": "string",
         "pattern": "^[\\s,]*(?:(?:(?:id|documentId|username|email|provider|confirmed|blocked|createdAt|updatedAt|publishedAt)(?::\\s*(?:[aA][sS][cC]|[dD][eE][sS][cC]))?|(?:(?:role\\.(?:permissions\\.role\\.)*users\\.)*(?:(?:id|documentId|username|email|provider|confirmed|blocked|createdAt|updatedAt|publishedAt)|role\\.(?:permissions\\.role\\.)*(?:(?:id|documentId|name|description|type|createdAt|updatedAt|publishedAt)|permissions\\.(?:id|documentId|action|createdAt|updatedAt|publishedAt))))(?::(?:[aA][sS][cC]|[dD][eE][sS][cC]))?)\\s*(?:,[\\s,]*|$))*$",
@@ -31948,7 +32557,8 @@
               {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 9007199254740991,
+                "maximum": 100,
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -31960,6 +32570,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -31971,6 +32582,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -32114,6 +32726,16 @@
             ]
           },
           "topic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrapiWrite.RelationInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leadTopic": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StrapiWrite.RelationInput"
@@ -33963,7 +34585,8 @@
               {
                 "type": "integer",
                 "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
+                "maximum": 100,
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -33975,6 +34598,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -33986,6 +34610,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34129,6 +34754,16 @@
             ]
           },
           "topic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrapiWrite.RelationInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leadTopic": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StrapiWrite.RelationInput"
@@ -34587,7 +35222,8 @@
               {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 9007199254740991,
+                "maximum": 100,
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34599,6 +35235,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34610,6 +35247,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34752,6 +35390,16 @@
             ]
           },
           "topic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrapiWrite.RelationInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leadTopic": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StrapiWrite.RelationInput"
@@ -34969,7 +35617,8 @@
               {
                 "type": "integer",
                 "minimum": -9007199254740991,
-                "maximum": 9007199254740991,
+                "maximum": 100,
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34981,6 +35630,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -34992,6 +35642,7 @@
             "anyOf": [
               {
                 "type": "number",
+                "description": "Send a JSON number. Strapi also accepts a numeric string and casts it before it checks the type and range (x-strapi-coerces-numeric-string); generic JSON Schema validation does not apply that cast.",
                 "x-strapi-coerces-numeric-string": true
               },
               {
@@ -35134,6 +35785,16 @@
             ]
           },
           "topic": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrapiWrite.RelationInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leadTopic": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/StrapiWrite.RelationInput"
@@ -35300,6 +35961,53 @@
           }
         },
         "required": ["__component"],
+        "additionalProperties": false
+      },
+      "LandingPageInput": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "introduction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["headline"],
+        "additionalProperties": false
+      },
+      "QuoteInput": {
+        "type": "object",
+        "properties": {
+          "quotation": {
+            "type": "string"
+          },
+          "attribution": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["quotation"],
         "additionalProperties": false
       },
       "LandingPageUpdateInput": {

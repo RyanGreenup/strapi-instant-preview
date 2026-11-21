@@ -2,6 +2,7 @@ import type { core, ZodType } from "zod/v4";
 
 export type SchemaRegistry = core.$ZodRegistry<{
   id?: string;
+  description?: string;
   default?: unknown;
   allOf?: Record<string, unknown>[];
   "x-strapi-coerces-numeric-string"?: true;

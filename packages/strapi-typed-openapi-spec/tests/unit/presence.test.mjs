@@ -34,6 +34,12 @@ const models = {
           relation: "manyToMany",
           target: "api::person.person",
         },
+        lead: {
+          type: "relation",
+          relation: "manyToOne",
+          target: "api::person.person",
+          useJoinTable: false,
+        },
         cover: { type: "media", multiple: false },
         seo: { type: "component", component: "shared.seo", repeatable: false },
         blocks: {
@@ -71,7 +77,13 @@ const models = {
     },
     "shared.quote": { info: {}, attributes: { text: { type: "text" } } },
   },
+  // As strapi.db.metadata reports it: `lead` uses a join column (useJoinTable: false).
+  relationStorage: (owner, key) =>
+    owner === "api::article.article" && key === "lead"
+      ? "join-column"
+      : "join-table",
 };
+
 const uid = "api::article.article";
 const plan = (query) => parsePresence(models, uid, query);
 const keys = (presence) => [...presence.populate.keys()].sort();
@@ -82,6 +94,7 @@ test("reads populate shortcuts, lists, dot paths and objects", () => {
     "author",
     "blocks",
     "cover",
+    "lead",
     "seo",
     "tags",
   ]);
@@ -100,7 +113,10 @@ test("reads populate shortcuts, lists, dot paths and objects", () => {
   }).root;
   expect(keys(nested.populate.get("author").plan)).toEqual(["photo"]);
   expect([...nested.populate.get("author").plan.fields]).toEqual(["name"]);
-  expect(nested.populate.get("tags")).toEqual({ kind: "count" });
+  expect(nested.populate.get("tags")).toEqual({
+    kind: "count",
+    target: "api::person.person",
+  });
 });
 
 test("reads dynamic zone fragments and shared populate", () => {
@@ -170,8 +186,16 @@ const schemas = createSchemas(z, models, {
   documentIdPattern: "loose",
   strictResponseObjects: true,
 });
-const response = (query, list = false) =>
-  schemas.queryResponse(uid, list, plan(query));
+// Every relation target is readable unless a test passes its own access.
+const everyone = { readable: new Set(["api::person.person"]) };
+// Pass `undefined` explicitly for unknown permissions.
+const response = (query, list = false, ...access) =>
+  schemas.queryResponse(
+    uid,
+    list,
+    plan(query),
+    access.length ? access[0] : everyone,
+  );
 const article = (extra = {}) => ({
   id: 1,
   documentId: "a1",
@@ -231,6 +255,66 @@ test("requires sent scalars and populated keys, and rejects unpopulated ones", (
   ).toBe(false);
 });
 
+test("a count request follows the relation's database storage", () => {
+  expect(
+    plan({ populate: { lead: { count: true } } }).root.populate.get("lead"),
+  ).toMatchObject({ kind: "nested", target: "api::person.person" });
+  const person = {
+    id: 2,
+    documentId: "p",
+    name: "N",
+    photo: undefined,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    publishedAt: "2026-01-01T00:00:00.000Z",
+  };
+  delete person.photo;
+  const counted = response({ populate: { lead: { count: true } } });
+  expect(ok(counted, article({ lead: person }))).toBe(true);
+  expect(ok(counted, article({ lead: null }))).toBe(true);
+  expect(ok(counted, article({ lead: { count: 1 } }))).toBe(false);
+
+  // Unknown storage: either shape passes, neither is required.
+  const { relationStorage: _, ...unknownModels } = models;
+  const unknown = createSchemas(z, unknownModels, {
+    documentIdPattern: "loose",
+    strictResponseObjects: true,
+  });
+  const unknownPlan = parsePresence(unknownModels, uid, {
+    populate: { tags: { count: true } },
+  });
+  expect(unknownPlan.root.populate.get("tags").kind).toBe("count-or-nested");
+  const loose = unknown.queryResponse(uid, false, unknownPlan, everyone);
+  expect(ok(loose, article({ tags: { count: 2 } }))).toBe(true);
+  expect(ok(loose, article({ tags: [person] }))).toBe(true);
+  expect(ok(loose, article({ tags: { count: -1 } }))).toBe(false);
+  expect(ok(loose, article({ tags: { count: 1.5 } }))).toBe(false);
+
+  // The shared schema keeps the count branch only where Strapi can send it.
+  expect(schemas.relationCount(uid, "lead")).toBe("no");
+  expect(schemas.relationCount(uid, "tags")).toBe("yes");
+  expect(unknown.relationCount(uid, "tags")).toBe("unknown");
+});
+
+test("a populated relation is required only when its permission is known", () => {
+  const populated = { populate: "author" };
+  // Unknown permissions: the key may be missing, but a wrong value still fails.
+  expect(ok(response(populated, false, undefined), article())).toBe(true);
+  expect(
+    ok(response(populated, false, undefined), article({ author: "x" })),
+  ).toBe(false);
+  // Readable: required. Not readable: Strapi removes it, so it must be absent.
+  expect(ok(response(populated), article())).toBe(false);
+  const blocked = { readable: new Set() };
+  expect(ok(response(populated, false, blocked), article())).toBe(true);
+  expect(
+    ok(response(populated, false, blocked), article({ author: null })),
+  ).toBe(false);
+  expect(
+    plan({ populate: { author: { populate: "photo" }, cover: true } }),
+  ).toBeDefined();
+});
+
 test("makes required fields and publishedAt non-null only on published responses", () => {
   expect(ok(response({}), article({ title: null }))).toBe(false);
   expect(ok(response({}), article({ publishedAt: null }))).toBe(false);
@@ -239,6 +323,18 @@ test("makes required fields and publishedAt non-null only on published responses
       response({ status: "draft" }),
       article({ title: null, publishedAt: null }),
     ),
+  ).toBe(true);
+  // A draft read returns the draft version: a timestamp is wrong, and a
+  // publishedAt left out by `fields` stays optional.
+  expect(ok(response({ status: "draft" }), article({ title: null }))).toBe(
+    false,
+  );
+  expect(
+    ok(response({ status: "draft", fields: ["title"] }), {
+      id: 1,
+      documentId: "a1",
+      title: "T",
+    }),
   ).toBe(true);
   // A field hidden by conditions.visible is stored as null even when required.
   expect(ok(response({}), article({ teaser: null }))).toBe(true);

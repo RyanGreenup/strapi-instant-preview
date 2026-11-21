@@ -1,5 +1,6 @@
 import type { Model } from "../adapter";
 
+import { relationCount, type RelationStorage } from "./relation-count";
 import { attributeType } from "./scalars";
 
 /**
@@ -13,10 +14,18 @@ export type Presence = {
   /** Populated keys. A relational key that is not listed is absent. */
   populate: ReadonlyMap<string, Populated>;
 };
-export type Populated =
+/**
+ * `target` is the related content type of a regular (not polymorphic)
+ * relation. Strapi drops such a key when the caller cannot `find` the target.
+ * `count-or-nested` is a count request on a relation whose storage is unknown:
+ * Strapi sends a count from a join table and the document from a join column.
+ */
+export type Populated = { target?: string } & (
   | { kind: "count" }
+  | { kind: "count-or-nested"; plan: Presence }
   | { kind: "nested"; plan: Presence }
-  | { kind: "zone"; on: ReadonlyMap<string, Presence> };
+  | { kind: "zone"; on: ReadonlyMap<string, Presence> }
+);
 export type Pagination = { style: "page" | "offset"; withCount: boolean };
 export type RequestPlan = {
   root: Presence;
@@ -32,6 +41,7 @@ export type RequestPlan = {
 type PresenceModels = {
   contentTypes: Record<string, Model>;
   components: Record<string, Model>;
+  relationStorage?: RelationStorage;
 };
 type Raw = Record<string, unknown>;
 
@@ -85,7 +95,7 @@ export function parsePresence(
   const raw = query === undefined || query === null ? {} : query;
   if (!record(raw)) return;
   try {
-    const root = level(models, model, raw.fields, raw.populate);
+    const root = level(models, uid, model, raw.fields, raw.populate);
     return {
       root,
       status: status(raw.status),
@@ -164,14 +174,30 @@ function fields(model: Model, value: unknown): ReadonlySet<string> | undefined {
 
 function level(
   models: PresenceModels,
+  uid: string,
   model: Model,
   rawFields: unknown,
   rawPopulate: unknown,
 ): Presence {
   return {
     fields: fields(model, rawFields),
-    populate: populate(models, model, rawPopulate),
+    populate: populate(models, uid, model, rawPopulate),
   };
+}
+
+/** The regular relation targets a plan populates, at any depth, sorted. */
+export function relationTargets(plan: RequestPlan): string[] {
+  const found = new Set<string>();
+  const visit = (presence: Presence) => {
+    for (const populated of presence.populate.values()) {
+      if (populated.target) found.add(populated.target);
+      if (populated.kind === "zone")
+        for (const on of populated.on.values()) visit(on);
+      else if (populated.kind !== "count") visit(populated.plan);
+    }
+  };
+  visit(plan.root);
+  return [...found].sort();
 }
 
 function populatable(model: Model): string[] {
@@ -182,6 +208,7 @@ function populatable(model: Model): string[] {
 
 function populate(
   models: PresenceModels,
+  uid: string,
   model: Model,
   value: unknown,
 ): Map<string, Populated> {
@@ -189,19 +216,19 @@ function populate(
   if (value === undefined || value === null || isFalse(value)) return result;
   if (isTrue(value)) {
     for (const key of populatable(model))
-      result.set(key, entry(models, model, key, true));
+      result.set(key, entry(models, uid, model, key, true));
     return result;
   }
   if (record(value)) {
     for (const [key, nested] of Object.entries(value)) {
       if (isFalse(nested)) continue;
-      result.set(key, entry(models, model, key, nested));
+      result.set(key, entry(models, uid, model, key, nested));
     }
     return result;
   }
   // Comma lists and arrays of dot paths: `a,b.c` populates a, b and b.c.
   const paths = names(value);
-  if (paths.includes("*")) return populate(models, model, "*");
+  if (paths.includes("*")) return populate(models, uid, model, "*");
   const grouped = new Map<string, string[]>();
   for (const path of paths) {
     const [head, ...rest] = path.split(".");
@@ -214,6 +241,7 @@ function populate(
       key,
       entry(
         models,
+        uid,
         model,
         key,
         children.length ? { populate: children } : true,
@@ -227,18 +255,23 @@ function target(
   models: PresenceModels,
   model: Model,
   key: string,
-): { type: string; model?: Model; uids?: string[] } {
+): { type: string; uid?: string; model?: Model; uids?: string[] } {
   const attribute = hasOwn(model.attributes, key)
     ? model.attributes[key]
     : unsupported();
   const type = attributeType(attribute);
   switch (type) {
     case "media":
-      return { type, model: models.contentTypes[fileUid] ?? unsupported() };
+      return {
+        type,
+        uid: fileUid,
+        model: models.contentTypes[fileUid] ?? unsupported(),
+      };
     case "component": {
       const uid = attribute.component;
       return {
         type,
+        uid: uid as string,
         model:
           typeof uid === "string" && hasOwn(models.components, uid)
             ? models.components[uid]
@@ -265,6 +298,7 @@ function target(
       const uid = attribute.target;
       return {
         type,
+        uid: uid as string,
         model:
           typeof uid === "string" && hasOwn(models.contentTypes, uid)
             ? models.contentTypes[uid]
@@ -278,11 +312,13 @@ function target(
 
 function entry(
   models: PresenceModels,
+  owner: string,
   model: Model,
   key: string,
   value: unknown,
 ): Populated {
   const found = target(models, model, key);
+  const relation = found.type === "relation" ? { target: found.uid! } : {};
   const options = isTrue(value) ? {} : record(value) ? value : unsupported();
   for (const name of Object.keys(options))
     if (!nestedKeys.has(name)) unsupported();
@@ -294,6 +330,27 @@ function entry(
     )
       unsupported();
     // A dynamic zone ignores `count` and sends its entries (seen on 5.62).
+    if (found.type === "relation") {
+      // A join-column relation ignores `count` and sends the document or null
+      // (database populate/apply.ts, XtoOne); see relation-count.ts.
+      const counts = relationCount(
+        models.relationStorage,
+        owner,
+        key,
+        model.attributes[key],
+      );
+      if (counts === "yes") return { ...relation, kind: "count" };
+      const plan = level(
+        models,
+        found.uid!,
+        found.model!,
+        undefined,
+        undefined,
+      );
+      return counts === "no"
+        ? { ...relation, kind: "nested", plan }
+        : { ...relation, kind: "count-or-nested", plan };
+    }
     if (found.type !== "dynamiczone") return { kind: "count" };
   }
   if (found.type === "dynamiczone") {
@@ -317,9 +374,12 @@ function entry(
             : record(fragment)
               ? fragment
               : unsupported();
-        on.set(uid, level(models, component, raw.fields, raw.populate));
+        on.set(uid, level(models, uid, component, raw.fields, raw.populate));
       } else {
-        on.set(uid, level(models, component, options.fields, options.populate));
+        on.set(
+          uid,
+          level(models, uid, component, options.fields, options.populate),
+        );
       }
     }
     return { kind: "zone", on };
@@ -328,7 +388,14 @@ function entry(
   // Polymorphic targets keep the static entry schema; only key presence matters.
   if (found.type === "morph") return { kind: "nested", plan: empty };
   return {
+    ...relation,
     kind: "nested",
-    plan: level(models, found.model!, options.fields, options.populate),
+    plan: level(
+      models,
+      found.uid!,
+      found.model!,
+      options.fields,
+      options.populate,
+    ),
   };
 }

@@ -21,6 +21,7 @@ import { collectRoutes } from "../catalog";
 import { resolveConfig } from "../config";
 import { resolveContracts } from "../contract";
 import { createSchemas, fileUid } from "../schemas";
+import { exampleObject, requiredKeys } from "./examples";
 import { createFilters } from "./filters";
 import { createModelFields } from "./model-fields";
 import { createPaging } from "./paging";
@@ -28,7 +29,13 @@ import { buildQueryParameters } from "./parameters";
 import { schemaConverter } from "./schemas";
 import { selfCheck } from "./self-check";
 
-type Content = Record<string, { schema: JSONSchema }>;
+type Content = Record<
+  string,
+  {
+    schema: JSONSchema;
+    examples?: Record<string, { summary: string; value: unknown }>;
+  }
+>;
 type Parameter = {
   name: string;
   in: "path" | "query";
@@ -50,10 +57,22 @@ export type Operation = {
   tags: string[];
   security: { bearerAuth?: string[] }[];
   parameters?: Parameter[];
-  requestBody?: { required: boolean; content: Content };
+  requestBody?: { required: boolean; description?: string; content: Content };
   responses: Record<string, { description: string; content?: Content }>;
   "x-strapi-request-status"?: StatusSchemas;
   "x-strapi-response-status"?: StatusSchemas & { status: number };
+  "x-strapi-single-type-write"?: SingleTypeWrite;
+};
+/**
+ * A single type's PUT: `create` applies when no document exists, `update`
+ * otherwise. With draft and publish, each is a map by `status` value, and
+ * `statusParameter` names the parameter that selects it.
+ */
+export type SingleTypeWrite = {
+  condition: "document exists";
+  create: JSONSchema | StatusSchemas["schemas"];
+  update: JSONSchema | StatusSchemas["schemas"];
+  statusParameter?: "status";
 };
 /** OpenAPI 3.1 document whose `paths` omit the REST prefix in the default server URL. */
 export type OpenAPIDocument = {
@@ -127,6 +146,24 @@ export function assemble(app: App, overrides?: Partial<Config>) {
       getConfig<unknown>(app, "api.documents.strictRelations", false) === true,
   });
   const fields = createModelFields(appModels);
+  // One decision with the relation schemas and the query-mode checker. Only
+  // relations a client can populate: the same private rule as the populate
+  // catalog, and no admin models (they have no Content API).
+  const countless = Object.keys({
+    ...appModels.contentTypes,
+    ...appModels.components,
+  })
+    .filter((uid) => !uid.startsWith("admin::"))
+    .flatMap((uid) =>
+      fields
+        .get(uid)
+        .attributes.filter(
+          ({ name, private: hidden }) =>
+            !hidden && schemas.relationCount(uid, name) === "no",
+        )
+        .map(({ name }) => `${uid}.${name}`),
+    )
+    .sort();
   const filters = createFilters(z, fields, schemas.registry);
   const paging = createPaging(z, fields, schemas.registry);
   const contracts = resolveContracts(app, z, allRoutes, schemas);
@@ -304,6 +341,7 @@ export function assemble(app: App, overrides?: Partial<Config>) {
                   `populate sort (${uid})`,
                 ),
               exactUpstream: !!core && route.source.kind === "api",
+              countless,
             }
           : undefined,
       ),
@@ -337,6 +375,39 @@ export function assemble(app: App, overrides?: Partial<Config>) {
         request.body!["application/json"] = published;
       }
     }
+    // A single type's PUT creates the document when none exists
+    // (core-api/service/single-type.ts, createOrUpdate), so a partial body
+    // that fits the update input can still fail. JSON Schema cannot check
+    // existence: the body stays the broad update input, and the extension names
+    // the create and update bodies for a consumer that knows which applies.
+    const singleTypeWrite =
+      core &&
+      core.kind === "singleType" &&
+      core.action === "update" &&
+      !contract.request?.body
+        ? (() => {
+            const body = (update: boolean, draft?: boolean) =>
+              convertInput(
+                z.object({ data: schemas.input(core.uid, update, draft) }),
+                `single type ${update ? "update" : "create"} body`,
+              );
+            const draftAndPublish =
+              appModels.contentTypes[core.uid].options?.draftAndPublish ===
+              true;
+            const byStatus = (update: boolean) =>
+              draftAndPublish
+                ? { published: body(update), draft: body(update, true) }
+                : body(update);
+            return {
+              condition: "document exists" as const,
+              create: byStatus(false),
+              update: byStatus(true),
+              ...(draftAndPublish && { statusParameter: "status" as const }),
+            };
+          })()
+        : undefined;
+    if (singleTypeWrite)
+      operation["x-strapi-single-type-write"] = singleTypeWrite;
     const bodies = Object.entries(request.body ?? {});
     if (bodies.length)
       operation.requestBody = {
@@ -348,6 +419,47 @@ export function assemble(app: App, overrides?: Partial<Config>) {
           ]),
         ),
       };
+    if (singleTypeWrite && operation.requestBody) {
+      const pick = (schema: unknown) =>
+        ((schema as Record<string, JSONSchema>).published ??
+          schema) as JSONSchema;
+      const data = (schema: JSONSchema) =>
+        (schema.properties as Record<string, JSONSchema> | undefined)?.data;
+      const statusNote = singleTypeWrite.statusParameter
+        ? "; the status query parameter selects the published or draft rules separately."
+        : ".";
+      operation.requestBody.description = [
+        "Creates the document when none exists, so the body must then match the create schema (every required field).",
+        "When the document exists, it is updated and a partial body is enough.",
+        "This schema accepts the update form; JSON Schema cannot check whether the document exists.",
+        `See x-strapi-single-type-write for both schemas${statusNote}`,
+      ].join(" ");
+      const content = operation.requestBody.content["application/json"];
+      if (content)
+        content.examples = {
+          create: {
+            summary: "No document exists yet: send every required field",
+            value: {
+              data: exampleObject(
+                data(pick(singleTypeWrite.create)),
+                components,
+                false,
+              ),
+            },
+          },
+          update: {
+            summary: "The document exists: send only the fields to change",
+            value: {
+              data: exampleObject(
+                data(pick(singleTypeWrite.update)),
+                components,
+                true,
+                requiredKeys(data(pick(singleTypeWrite.create)), components),
+              ),
+            },
+          },
+        };
+    }
     for (const [status, schema] of [...contract.responses].sort(
       ([a], [b]) => a - b,
     )) {

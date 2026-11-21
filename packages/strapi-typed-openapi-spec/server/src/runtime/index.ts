@@ -6,6 +6,7 @@ import Ajv2020 from "ajv/dist/2020";
 import { inspect } from "node:util";
 
 import type { App, RouteContext } from "../adapter";
+import type { RequestPlan } from "../schemas/presence";
 import type { OpenAPIDocument } from "../spec/assemble";
 
 import {
@@ -20,14 +21,15 @@ import {
 } from "../adapter";
 import { joinPath } from "../catalog/path";
 import { resolveConfig } from "../config";
-import { parsePresence } from "../schemas/presence";
+import { parsePresence, relationTargets } from "../schemas/presence";
 import { assemble } from "../spec/assemble";
 import { pointerToken } from "../spec/pointer";
 
 type ViolationKind =
   | "undeclared-status"
   | "unexpected-body"
-  | "schema-mismatch";
+  | "schema-mismatch"
+  | "missing-coverage";
 /** Records the original response status, even if the middleware replaces it with HTTP 500. */
 export type Violation = {
   route: string;
@@ -35,12 +37,21 @@ export type Violation = {
   kind: ViolationKind;
   issues: string[];
 };
-type Check = (
+/**
+ * The relation targets the caller may read, as Strapi's output sanitizer decides
+ * it. Undefined when the checker cannot resolve permissions for the request.
+ */
+type Access = { readable: ReadonlySet<string> } | undefined;
+type Check = ((
   status: number,
   body: unknown,
   redirect: boolean,
   query: unknown,
-) => Omit<Violation, "route" | "status"> | undefined;
+  access: Access,
+) => Omit<Violation, "route" | "status"> | undefined) & {
+  /** Query mode: the relation targets whose `find` permission decides the projection. */
+  targets?: (status: number, query: unknown) => readonly string[];
+};
 type TestMode = "spec" | "query";
 type Runtime = {
   enabled: boolean;
@@ -158,27 +169,71 @@ export function initializeRuntime(app: App) {
     for (const route of routes) {
       const contract = contracts.get(route.key)!;
       const compiled = new Map<number, ValidateFunction>();
+      const path = pointerToken(route.openapiPath);
+      const method = route.method.toLowerCase();
+      const operation = document.paths[route.openapiPath][method];
+      // A single `$ref` shares one compiled validator across operations.
+      const validatorFor = (emitted: unknown, pointer: string) => {
+        const ref =
+          emitted &&
+          typeof emitted === "object" &&
+          Object.keys(emitted).length === 1 &&
+          typeof (emitted as { $ref?: unknown }).$ref === "string"
+            ? (emitted as { $ref: string }).$ref
+            : pointer;
+        let validate = sharedValidators.get(ref);
+        if (!validate) {
+          validate = ajv!.compile({ $ref: `${id}${ref}` });
+          sharedValidators.set(ref, validate);
+        }
+        return validate;
+      };
       if (ajv)
         for (const [status, schema] of contract.responses) {
           if (schema === null) continue;
-          const path = pointerToken(route.openapiPath);
-          const method = route.method.toLowerCase();
-          const emitted =
-            document.paths[route.openapiPath][method].responses[status]
-              .content?.[json].schema;
-          const ref =
-            emitted &&
-            Object.keys(emitted).length === 1 &&
-            typeof emitted.$ref === "string"
-              ? emitted.$ref
-              : `#/paths/${path}/${method}/responses/${status}/content/${pointerToken(json)}/schema`;
-          let validate = sharedValidators.get(ref);
-          if (!validate) {
-            validate = ajv.compile({ $ref: `${id}${ref}` });
-            sharedValidators.set(ref, validate);
-          }
-          compiled.set(status, validate);
+          compiled.set(
+            status,
+            validatorFor(
+              operation.responses[status].content?.[json].schema,
+              `#/paths/${path}/${method}/responses/${status}/content/${pointerToken(json)}/schema`,
+            ),
+          );
         }
+      // Spec mode: a default core action with a known `status` query value uses
+      // the per-status schema from `x-strapi-response-status`. Custom handlers
+      // and other status values keep the ordinary response schema.
+      const mapping = operation["x-strapi-response-status"] as
+        | { status: number; schemas: Record<string, unknown> }
+        | undefined;
+      const byStatus =
+        ajv &&
+        mapping &&
+        contract.source === "core" &&
+        route.coreAction &&
+        !route.coreAction.customizations
+          ? {
+              status: mapping.status,
+              validators: Object.fromEntries(
+                (["published", "draft"] as const).map((state) => [
+                  state,
+                  validatorFor(
+                    mapping.schemas[state],
+                    `#/paths/${path}/${method}/x-strapi-response-status/schemas/${state}`,
+                  ),
+                ]),
+              ) as Record<"published" | "draft", ValidateFunction>,
+            }
+          : undefined;
+      const statusValidator = (status: number, query: unknown) => {
+        if (!byStatus || status !== byStatus.status) return;
+        const requested =
+          query && typeof query === "object"
+            ? (query as { status?: unknown }).status
+            : undefined;
+        if (requested === undefined) return byStatus.validators.published;
+        if (requested === "published" || requested === "draft")
+          return byStatus.validators[requested];
+      };
       const koaRedirect =
         contract.source === "built-in" &&
         [
@@ -197,27 +252,43 @@ export function initializeRuntime(app: App) {
           ? route.coreAction
           : undefined;
       const success = core?.action === "create" ? 201 : 200;
-      const perQuery = new Map<string, ZodType | undefined>();
-      const querySchema = (query: unknown): ZodType | undefined => {
+      const plans = new Map<string, RequestPlan | undefined>();
+      const planFor = (query: unknown) => {
         if (!core) return;
         const key = JSON.stringify(query ?? {});
-        if (perQuery.has(key)) return perQuery.get(key);
+        if (plans.has(key)) return plans.get(key);
         const plan = parsePresence(models, core.uid, query, { withCount });
+        if (plans.size >= 200) plans.delete(plans.keys().next().value!);
+        plans.set(key, plan);
+        return plan;
+      };
+      // Keyed by the raw query and the readable targets: the same query can
+      // project differently for callers with different permissions.
+      const perQuery = new Map<string, ZodType | undefined>();
+      const querySchema = (
+        query: unknown,
+        access: Access,
+      ): ZodType | undefined => {
+        if (!core) return;
+        const key = `${JSON.stringify(query ?? {})}|${access ? [...access.readable].sort().join(",") : "?"}`;
+        if (perQuery.has(key)) return perQuery.get(key);
+        const plan = planFor(query);
         const schema =
           plan &&
           schemas.queryResponse(
             core.uid,
             core.kind === "collectionType" && core.action === "find",
             plan,
+            access,
           );
         if (perQuery.size >= 200)
           perQuery.delete(perQuery.keys().next().value!);
         perQuery.set(key, schema);
         return schema;
       };
-      const check: Check = (status, body, redirect, query) => {
+      const check: Check = (status, body, redirect, query, access) => {
         const schema =
-          (status === success && querySchema(query)) ||
+          (status === success && querySchema(query, access)) ||
           contract.responses.get(status);
         if (schema === undefined)
           return { kind: "undeclared-status", issues: [] };
@@ -226,7 +297,7 @@ export function initializeRuntime(app: App) {
             return { kind: "unexpected-body", issues: [] };
           return;
         }
-        const validate = compiled.get(status);
+        const validate = statusValidator(status, query) ?? compiled.get(status);
         if (validate) {
           if (!validate(body))
             return {
@@ -252,6 +323,12 @@ export function initializeRuntime(app: App) {
           };
         }
       };
+      if (core)
+        check.targets = (status, query) => {
+          if (status !== success) return [];
+          const plan = planFor(query);
+          return plan ? relationTargets(plan) : [];
+        };
       lookup.set(`${route.method} ${joinPath(prefix, route.fullPath)}`, check);
       const fallback = `${route.source.kind}::${route.source.name} ${route.method} ${route.rawPath}`;
       if (!lookup.has(fallback)) lookup.set(fallback, check);
@@ -276,23 +353,73 @@ type Context = RouteContext & {
   status: number;
   body: unknown;
   query: unknown;
+  state: { auth?: unknown };
   get(name: string): string;
   response: { get(name: string): string };
 };
+
+type Verifier = {
+  auth?: { verify?: (auth: unknown, config: { scope: string }) => unknown };
+};
+
+/**
+ * Which `targets` the caller may read, by the check Strapi's output sanitizer
+ * makes (`removeRestrictedRelations`: `<uid>.find`). Undefined without request
+ * auth or a verifier, so the checker treats the projection as unknown.
+ */
+async function readableTargets(
+  app: App,
+  auth: unknown,
+  targets: readonly string[],
+): Promise<Access> {
+  const verify = (app as unknown as Verifier).auth?.verify;
+  if (auth === undefined || auth === null || typeof verify !== "function")
+    return;
+  // A rejected scope means Strapi removes the relation from the response.
+  const decisions = await Promise.all(
+    targets.map(async (uid) => {
+      try {
+        await verify.call((app as unknown as Verifier).auth, auth, {
+          scope: `${uid}.find`,
+        });
+        return uid;
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  return {
+    readable: new Set(
+      decisions.filter((uid): uid is string => uid !== undefined),
+    ),
+  };
+}
 
 /**
  * Checks Content API responses after downstream middleware returns.
  *
  * @remarks
- * Skips `HEAD`, requests for the v4 format or source maps, buffers, and streams.
- * If a catalog match lacks valid route metadata or an eligible route has no
- * catalog match, the middleware logs the problem and disables checks for the app.
+ * Skips `HEAD`, requests for the v4 format or source maps, buffers, and streams,
+ * and plugin routes left out by `includePlugins`. These are intentional
+ * exclusions. A content route the checker cannot cover (invalid route metadata
+ * for a catalog match, or no catalog entry) is recorded as a `missing-coverage`
+ * violation for that route only; checks stay on for every other route and the
+ * response is left unchanged.
  */
 export default function validateResponses(
   _cfg: unknown,
   { strapi }: { strapi: App },
 ) {
   const rt = runtime(strapi);
+  const uncovered = (route: string, status: number, reason: string) => {
+    rt.violations.push({
+      route,
+      status,
+      kind: "missing-coverage",
+      issues: [reason],
+    });
+    logError(strapi, `${route}: ${reason}; response not checked`);
+  };
   return async (ctx: Context, next: () => Promise<unknown>) => {
     await next();
     if (
@@ -314,13 +441,12 @@ export default function validateResponses(
     const check =
       matched && rt.lookup.get(`${ctx.method} ${joinPath(matched)}`);
     if (!identity) {
-      if (check) {
-        rt.enabled = false;
-        logError(
-          strapi,
-          "Invalid ctx.state.route for a matched content route; response checks disabled",
+      if (check)
+        uncovered(
+          `${ctx.method} ${matched}`,
+          ctx.status,
+          "invalid ctx.state.route for a matched content route",
         );
-      }
       return;
     }
     if (identity.type !== "content-api") return;
@@ -330,25 +456,26 @@ export default function validateResponses(
       !rt.includePlugins.includes(identity.source.slice(8))
     )
       return;
+    const route = `${ctx.method} ${matched ?? identity.path}`;
     const validate =
       check ||
       rt.lookup.get(`${identity.source} ${ctx.method} ${identity.path}`);
     if (!validate) {
-      rt.enabled = false;
-      logError(
-        strapi,
-        `No catalog entry for ${ctx.method} ${identity.path}; response checks disabled`,
-      );
+      uncovered(route, ctx.status, "no catalog entry");
       return;
     }
+    const targets = validate.targets?.(ctx.status, ctx.query) ?? [];
+    const access = targets.length
+      ? await readableTargets(strapi, ctx.state.auth, targets)
+      : { readable: new Set<string>() };
     const problem = validate(
       ctx.status,
       ctx.body,
       !!ctx.response.get("Location"),
       ctx.query,
+      access,
     );
     if (!problem) return;
-    const route = `${ctx.method} ${matched ?? identity.path}`;
     rt.violations.push({ route, status: ctx.status, ...problem });
     logError(
       strapi,

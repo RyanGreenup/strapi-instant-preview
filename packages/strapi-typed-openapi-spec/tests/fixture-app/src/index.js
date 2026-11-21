@@ -33,6 +33,21 @@ const readActions = [
   "plugin::upload.content-api.findOne",
 ];
 
+// Can read articles but not the topics they relate to: Strapi's output
+// sanitizer drops topic relations from this role's responses.
+const restrictedRole = {
+  type: "restricted",
+  name: "Restricted reader",
+  actions: ["api::article.article.find", "api::article.article.findOne"],
+};
+
+async function ensureRole(strapi, { type, name }) {
+  const roles = strapi.db.query("plugin::users-permissions.role");
+  if (!(await roles.findOne({ where: { type } }))) {
+    await roles.create({ data: { type, name, description: name } });
+  }
+}
+
 async function grantPermissions(strapi, type, actions) {
   const role = await strapi.db
     .query("plugin::users-permissions.role")
@@ -66,6 +81,8 @@ module.exports = {
     }
 
     await grantPermissions(strapi, "public", readActions);
+    await ensureRole(strapi, restrictedRole);
+    await grantPermissions(strapi, restrictedRole.type, restrictedRole.actions);
     await grantPermissions(strapi, "authenticated", [
       ...readActions,
       ...authenticatedActions,

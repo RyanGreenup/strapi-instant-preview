@@ -17,6 +17,7 @@ import {
   type SchemaRegistry,
 } from "./modifiers";
 import { markCoercesNumericString } from "./numeric-strings";
+import { relationCount, type RelationStorage } from "./relation-count";
 import { attributeType, scalar, type ScalarMode } from "./scalars";
 import { fileJsonSchemas } from "./upload-file";
 
@@ -51,7 +52,18 @@ export interface Schemas {
    * request's `fields` and `populate`; values follow its `status`. Not
    * registered, so it never enters the emitted document.
    */
-  queryResponse(uid: string, list: boolean, plan: RequestPlan): ZodType;
+  /**
+   * @param access - The relation targets the caller may read. Without it, a
+   * populated relation is optional: permissions can remove it.
+   */
+  queryResponse(
+    uid: string,
+    list: boolean,
+    plan: RequestPlan,
+    access?: { readable: ReadonlySet<string> },
+  ): ZodType;
+  /** Whether a relation can answer a count request (see relation-count.ts). */
+  relationCount(owner: string, key: string): "yes" | "no" | "unknown";
   error: ZodType;
   /** Uses the same details schema as `error` but requires the given HTTP status in the body. */
   errorFor(status: number): ZodType;
@@ -61,10 +73,13 @@ export interface Schemas {
   warnings: string[];
 }
 
+type Access = { readable: ReadonlySet<string> } | undefined;
+
 interface SchemaModels {
   contentTypes: Record<string, Model>;
   components: Record<string, Model>;
   privateAttributes?: readonly string[];
+  relationStorage?: RelationStorage;
 }
 
 // Response states. 'response' does not know the status (plugin models, polymorphic
@@ -393,6 +408,18 @@ export function createSchemas(
     });
   }
 
+  function countFor(owner: string, key: string) {
+    const model = hasOwn(models.contentTypes, owner)
+      ? models.contentTypes[owner]
+      : models.components[owner];
+    return relationCount(
+      models.relationStorage,
+      owner,
+      key,
+      model?.attributes[key],
+    );
+  }
+
   function unknown(label: string, reason: string): ZodType {
     warn(label, reason);
     return z.unknown();
@@ -680,7 +707,9 @@ export function createSchemas(
         const target = polymorphic
           ? morphTarget(owner, key)
           : z.lazy(() => relationTarget(uid as string, mode));
-        return z.union([multiple ? z.array(target) : target, count]);
+        const value = multiple ? z.array(target) : target;
+        // A join-column relation never sends a count (relation-count.ts).
+        return countFor(owner, key) === "no" ? value : z.union([value, count]);
       }
       default: {
         if (owner === fileUid && type === "json" && hasOwn(fileJson, key))
@@ -1055,6 +1084,7 @@ export function createSchemas(
     isComponent: boolean,
     plan: Presence,
     status: RequestPlan["status"],
+    access: Access,
   ): Shape {
     const shape = fields(uid, model, "response", isComponent);
     const documentService = isComponent || uid.startsWith("api::");
@@ -1068,19 +1098,47 @@ export function createSchemas(
         : undefined;
       if (attribute && relationalTypes.has(attributeType(attribute))) {
         const populated = plan.populate.get(key);
-        if (populated)
-          shape[key] = populatedValue(
-            uid,
-            key,
-            attribute,
-            populated,
-            status,
-            published ? "published" : "draft",
-          );
-        else delete shape[key];
+        if (!populated) {
+          delete shape[key];
+          continue;
+        }
+        const value = populatedValue(
+          uid,
+          key,
+          attribute,
+          populated,
+          status,
+          published ? "published" : "draft",
+          access,
+        );
+        // Strapi's output sanitizer drops a relation whose target the caller
+        // cannot `find`. Polymorphic relations are checked per entry there.
+        const polymorphic =
+          attributeType(attribute) === "relation" &&
+          (attribute.relation === "morphToOne" ||
+            attribute.relation === "morphToMany");
+        if (populated.target === undefined && !polymorphic) {
+          shape[key] = value;
+        } else if (!access || polymorphic) {
+          shape[key] = value.optional();
+        } else if (access.readable.has(populated.target!)) {
+          shape[key] = value;
+        } else {
+          delete shape[key];
+        }
         continue;
       }
       if (plan.fields && !plan.fields.has(key)) continue;
+      // A draft read selects the draft version, whose publishedAt is null.
+      if (
+        !isComponent &&
+        key === "publishedAt" &&
+        status === "draft" &&
+        model.options?.draftAndPublish === true
+      ) {
+        shape[key] = z.null();
+        continue;
+      }
       let schema = unwrap(shape[key], "optional");
       const nonNull =
         published &&
@@ -1103,6 +1161,7 @@ export function createSchemas(
     populated: Populated,
     status: RequestPlan["status"],
     own: RequestPlan["status"],
+    access: Access,
   ): ZodType {
     if (populated.kind === "count") return count;
     const type = attributeType(attribute);
@@ -1110,7 +1169,7 @@ export function createSchemas(
     let multiple: boolean;
     if (populated.kind === "zone") {
       const variants = Array.from(populated.on, ([uid, plan]) =>
-        presentComponent(uid, plan, own, true),
+        presentComponent(uid, plan, own, true, access),
       );
       item =
         variants.length > 0
@@ -1121,7 +1180,7 @@ export function createSchemas(
           : z.never();
       multiple = true;
     } else if (type === "media") {
-      item = presentDocument(fileUid, populated.plan, status);
+      item = presentDocument(fileUid, populated.plan, status, access);
       multiple = attribute.multiple === true;
       // A multiple media field is never null (see fields()).
       if (multiple) return z.array(item);
@@ -1131,6 +1190,7 @@ export function createSchemas(
         populated.plan,
         own,
         false,
+        access,
       );
       multiple = attribute.repeatable === true;
     } else {
@@ -1139,19 +1199,29 @@ export function createSchemas(
         relation === "morphToOne" || relation === "morphToMany";
       item = polymorphic
         ? morphTarget(owner, key)
-        : presentDocument(attribute.target as string, populated.plan, status);
+        : presentDocument(
+            attribute.target as string,
+            populated.plan,
+            status,
+            access,
+          );
       multiple = hasOwn(toMany, relation);
     }
-    return (multiple ? z.array(item) : item).nullable();
+    const value = (multiple ? z.array(item) : item).nullable();
+    // Storage unknown: Strapi may send a count or the document.
+    return populated.kind === "count-or-nested"
+      ? z.union([count, value])
+      : value;
   }
 
   function presentDocument(
     uid: string,
     plan: Presence,
     status: RequestPlan["status"],
+    access: Access,
   ): SchemaObject {
     const model = contentType(uid);
-    const shape = presentShape(uid, model, false, plan, status);
+    const shape = presentShape(uid, model, false, plan, status, access);
     shape.id = rowId;
     shape.documentId = documentId;
     if (uid === fileUid && !hasOwn(shape, "isUrlSigned"))
@@ -1164,8 +1234,16 @@ export function createSchemas(
     plan: Presence,
     status: RequestPlan["status"],
     zone: boolean,
+    access: Access,
   ): SchemaObject {
-    const shape = presentShape(uid, models.components[uid], true, plan, status);
+    const shape = presentShape(
+      uid,
+      models.components[uid],
+      true,
+      plan,
+      status,
+      access,
+    );
     shape.id = rowId;
     if (zone) shape.__component = z.literal(uid);
     return responseObject(shape);
@@ -1175,8 +1253,9 @@ export function createSchemas(
     uid: string,
     list: boolean,
     plan: RequestPlan,
+    access?: { readable: ReadonlySet<string> },
   ): SchemaObject {
-    const data = presentDocument(uid, plan.root, plan.status);
+    const data = presentDocument(uid, plan.root, plan.status, access);
     if (!list) return responseObject({ data, meta: singleMeta });
     const { style, withCount } = plan.pagination;
     const counted = withCount
@@ -1202,6 +1281,7 @@ export function createSchemas(
     input,
     response,
     queryResponse,
+    relationCount: countFor,
     error,
     errorFor,
     get file() {

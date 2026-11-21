@@ -124,8 +124,26 @@ Other extensions describe what JSON Schema cannot:
 - `x-strapi-regex`: an attribute `regex` that JSON Schema would read differently
   from Strapi (Unicode mode). It is checked in `zod` mode only.
 - `x-strapi-coerces-numeric-string`: Strapi casts a numeric string sent to an
-  integer, float or decimal field. The contract still types the field as a
-  number (see `server/src/schemas/numeric-strings.ts`).
+  integer, float or decimal field, then checks the type and range on the cast
+  number. The contract still types the field as a number, and the field's
+  `description` says the same for readers that ignore extensions (see
+  `server/src/schemas/numeric-strings.ts`).
+- `x-strapi-single-type-write`: a single type's `PUT` creates the document when
+  none exists, so a body must then pass the `create` schema; otherwise the
+  `update` schema applies. The operation's own body is the broad `update` form,
+  because JSON Schema cannot check whether the document exists. With draft and
+  publish, `create` and `update` are maps by `status`.
+
+A relation offers `{ count }` only where Strapi can send it. Strapi answers
+`populate[x][count]=true` from a join table only. A relation stored in a join
+column (`useJoinTable: false`) sends the related document or `null`. Generation
+reads this from the booted app's database metadata. Where the metadata is not
+available, the count branch stays and query mode accepts either shape. The
+`populate` parameter description lists the relations that never count.
+
+A populated relation can be missing from a successful response: Strapi removes a
+relation whose target the caller cannot `find`. Relation keys stay optional in
+the contract.
 
 With the plugin enabled, use
 `strapi.plugin('openapi-contract').service('contract').declare(selector, responses)`
@@ -194,7 +212,15 @@ forces spec-mode validation and listens on a random local port. Pass
 teardown.
 
 Response checking skips HEAD, streams, the v4 response format, and encoded
-source maps. The contract does not vary by query or role.
+source maps. In `'spec'` mode, a default core action with a `status` query of
+`draft` or `published` (or no `status`) is checked against that status's schema
+from `x-strapi-response-status`. Other statuses and custom handlers use the
+operation's schema.
+
+A content route that the checker cannot cover (no catalog entry, or invalid
+route metadata) is recorded as a `missing-coverage` violation for that request.
+The response is left unchanged and checks stay on for other routes, so
+`expectNoContractViolations` reports the gap.
 
 Route paths use Strapi's `path-to-regexp` v6 syntax. The probe rejects optional
 or repeated segments, duplicate parameter names, and literal braces. Its error
@@ -221,12 +247,19 @@ request's query:
 - A relation, media field, component or dynamic zone is present only when
   `populate` asks for it (`*`, a list, dot paths, an object, or `on` fragments).
   `populate[x][count]=true` gives `{ count }`, except on a dynamic zone, where
-  Strapi ignores `count` and sends the entries.
+  Strapi ignores `count` and sends the entries, and on a join-column relation,
+  where it sends the document or `null`.
+- A populated relation is required only when the checker knows the caller can
+  read its target. It verifies `<target>.find` with `strapi.auth.verify`, as
+  Strapi's output sanitizer does. It requires the key for a readable target and
+  expects it to be absent for an unreadable one. Without request auth, the key
+  is optional and its value is checked when present.
 - On a published read, `publishedAt` and required scalars are non-null. This
   applies only to `api::` content types and components, and not to fields with
   `conditions.visible`. A create or update response is published unless the
-  query sets `status=draft`. Drafts keep them nullable. A populated document
-  follows the requested status only if its model has draft and publish.
+  query sets `status=draft`. Drafts keep them nullable, and a selected
+  `publishedAt` must be `null`. A populated document follows the requested
+  status only if its model has draft and publish.
 - List meta matches the pagination style (`page` and `pageSize`, or `start` and
   `limit`). `total` and `pageCount` are present unless `withCount` is false
   (default from `api.rest.withCount`).

@@ -65,6 +65,9 @@ before(async () => {
           description: null,
           quantity: 3,
           topic: child.documentId,
+          // A join-column relation rejects a documentId reference (seen on 5.63.0)
+          // ("relation(s) ... do not exist"); the row id works.
+          leadTopic: child.id,
           topics: [parent.documentId, child.documentId],
           relatedArticles: [related.documentId],
           notes: [{ message: "Note" }],
@@ -121,6 +124,7 @@ const matrix = [
   "status=draft&populate=*",
   "populate[topic][populate][parent]=true&populate[relatedArticles]=true",
   "populate[topics][count]=true&populate[notes][count]=true&populate[sections][count]=true",
+  "populate[topic][count]=true&populate[leadTopic][count]=true",
   "populate[sections][on][content.note][fields][0]=message",
   "populate[sections][populate]=*",
   "populate[cover]=true&populate[attachments][fields][0]=name",
@@ -216,6 +220,157 @@ test("a populated relation that is missing is a violation; an unrequested one is
       return document;
     };
     await anonymous(`/articles/${article.documentId}`).expect(500);
+  } finally {
+    service.findOne = findOne;
+    resetContractViolations(app.strapi);
+  }
+});
+
+test("a count request returns a count only for a join-table relation", async () => {
+  const unlinked = (
+    await editor("post", "/articles")
+      .send({ data: { title: "Unlinked" } })
+      .expect(201)
+  ).body.data;
+  const query = "populate[topic][count]=true&populate[leadTopic][count]=true";
+  const linked = (
+    await anonymous(`/articles/${article.documentId}?${query}`).expect(200)
+  ).body.data;
+  // `topic` uses a join table, `leadTopic` a join column (useJoinTable: false).
+  assert.deepEqual(linked.topic, { count: 1 });
+  assert.equal(linked.leadTopic.name, "Child");
+  assert.equal(typeof linked.leadTopic.documentId, "string");
+  const empty = (
+    await anonymous(`/articles/${unlinked.documentId}?${query}`).expect(200)
+  ).body.data;
+  assert.deepEqual(empty.topic, { count: 0 });
+  assert.equal(empty.leadTopic, null);
+
+  const service = app.strapi.service("api::article.article");
+  const findOne = service.findOne;
+  try {
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) document.leadTopic = { count: 1 };
+      return document;
+    };
+    await anonymous(`/articles/${article.documentId}?${query}`).expect(500);
+    resetContractViolations(app.strapi);
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) document.topic = { count: 1.5 };
+      return document;
+    };
+    await anonymous(`/articles/${article.documentId}?${query}`).expect(500);
+  } finally {
+    service.findOne = findOne;
+    resetContractViolations(app.strapi);
+  }
+});
+
+test("a draft read requires a null publishedAt when it is selected", async () => {
+  const draft = (
+    await editor("post", "/articles?status=draft")
+      .send({
+        data: { title: "Query draft", relatedArticles: [article.documentId] },
+      })
+      .expect(201)
+  ).body.data;
+  const path = `/articles/${draft.documentId}`;
+  await anonymous(`${path}?status=draft`).expect(200);
+  await anonymous(`${path}?status=draft&populate[relatedArticles]=true`).expect(
+    200,
+  );
+  const service = app.strapi.service("api::article.article");
+  const findOne = service.findOne;
+  const patch = (change) => {
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) change(document);
+      return document;
+    };
+  };
+  const timestamp = "2026-01-01T00:00:00.000Z";
+  try {
+    patch((document) => {
+      document.publishedAt = timestamp;
+    });
+    await anonymous(`${path}?status=draft`).expect(500);
+    resetContractViolations(app.strapi);
+    // `fields` leaves publishedAt out, so it may be missing.
+    patch((document) => {
+      delete document.publishedAt;
+    });
+    await anonymous(`${path}?status=draft&fields[0]=title`).expect(200);
+    await anonymous(`${path}?status=draft`).expect(500);
+    resetContractViolations(app.strapi);
+    patch((document) => {
+      document.publishedAt = null;
+    });
+    await anonymous(`/articles/${article.documentId}`).expect(500);
+    resetContractViolations(app.strapi);
+    // A populated draft-and-publish target takes the requested status.
+    patch((document) => {
+      for (const related of document.relatedArticles ?? [])
+        related.publishedAt = timestamp;
+    });
+    await anonymous(
+      `${path}?status=draft&populate[relatedArticles]=true`,
+    ).expect(500);
+  } finally {
+    service.findOne = findOne;
+    resetContractViolations(app.strapi);
+  }
+});
+
+test("a relation the caller cannot read may be missing, but not malformed", async () => {
+  const { body } = await app.request
+    .post(`${prefix}/auth/local/register`)
+    .send({
+      username: "restricted-reader",
+      email: "restricted@example.test",
+      password,
+    })
+    .expect(200);
+  const role = await app.strapi.db
+    .query("plugin::users-permissions.role")
+    .findOne({ where: { type: "restricted" } });
+  await app.strapi.db
+    .query("plugin::users-permissions.user")
+    .update({ where: { id: body.user.id }, data: { role: role.id } });
+  const restricted = (path) =>
+    app.request
+      .get(`${prefix}${path}`)
+      .set("Authorization", `Bearer ${body.jwt}`);
+  const path = `/articles/${article.documentId}?populate=*`;
+
+  const full = (await editor("get", path).expect(200)).body.data;
+  assert.equal(full.topic.name, "Child");
+  assert.equal(full.topics.length, 2);
+  const limited = (await restricted(path).expect(200)).body.data;
+  // Strapi's output sanitizer drops relations to api::topic.topic.
+  assert.equal("topic" in limited, false);
+  assert.equal("topics" in limited, false);
+  assert.equal(limited.relatedArticles.length, 1);
+  expectNoContractViolations(app.strapi);
+
+  const service = app.strapi.service("api::article.article");
+  const findOne = service.findOne;
+  try {
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) document.relatedArticles = "wrong";
+      return document;
+    };
+    await restricted(path).expect(500);
+    resetContractViolations(app.strapi);
+    // The editor can read topics, so a missing topic is still a violation.
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) delete document.topic;
+      return document;
+    };
+    await editor("get", path).expect(500);
   } finally {
     service.findOne = findOne;
     resetContractViolations(app.strapi);

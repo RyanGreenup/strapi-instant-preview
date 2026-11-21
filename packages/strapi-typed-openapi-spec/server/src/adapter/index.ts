@@ -85,7 +85,39 @@ export function version(app: App): string {
   return strapiRequire(appDir(app))("./package.json").version;
 }
 
-/** Gives the app's live model registries and its global response-private attributes. */
+type DatabaseMetadata = {
+  get(
+    uid: string,
+  ):
+    | { attributes?: Record<string, Record<string, unknown> | undefined> }
+    | undefined;
+};
+
+/**
+ * How the booted app's database stores a relation, from `strapi.db.metadata`.
+ * `unknown` when the database or the attribute metadata is not available.
+ */
+export function relationStorage(app: App) {
+  return (uid: string, key: string) => {
+    try {
+      const metadata = (
+        app as unknown as { db?: { metadata?: DatabaseMetadata } }
+      ).db?.metadata;
+      const attribute = metadata?.get(uid)?.attributes?.[key];
+      if (!attribute || attribute.type !== "relation") return "unknown";
+      if (attribute.joinTable) return "join-table";
+      if (attribute.joinColumn) return "join-column";
+    } catch {
+      // Fall through: the storage is unknown.
+    }
+    return "unknown";
+  };
+}
+
+/**
+ * Gives the app's live model registries, its global response-private
+ * attributes, and the database storage of its relations.
+ */
 export function models(app: App) {
   return {
     contentTypes: app.contentTypes,
@@ -95,10 +127,15 @@ export function models(app: App) {
       "api.responses.privateAttributes",
       [],
     ),
+    relationStorage: relationStorage(app),
   } as unknown as {
     contentTypes: Record<string, Model>;
     components: Record<string, Model>;
     privateAttributes: string[];
+    relationStorage: (
+      uid: string,
+      key: string,
+    ) => "join-table" | "join-column" | "unknown";
   };
 }
 /** The type argument does not validate the value from Strapi's config. */

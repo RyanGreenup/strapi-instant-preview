@@ -277,6 +277,10 @@ test("nested relation population distinguishes documents, a self-relation, and a
 test("an empty single type returns 404, then supports create/update through PUT and empty DELETE", async () => {
   const path = "/landing-page";
   assertError(await anonymous(path).expect(404), 404);
+  // PUT creates the missing document, so a partial body needs `headline`.
+  const partial = { data: { introduction: { quotation: "Partial" } } };
+  assertError(await editor("put", path).send(partial).expect(400), 400);
+  assertError(await anonymous(path).expect(404), 404);
   const added = await editor("put", path)
     .send({
       data: {
@@ -293,6 +297,12 @@ test("an empty single type returns 404, then supports create/update through PUT 
     .expect(200);
   assert.equal(updated.body.data.headline, "Welcome back!");
   assert.equal(updated.body.data.documentId, added.body.data.documentId);
+  // The same partial body that failed on create updates the existing document.
+  const patched = await editor("put", `${path}?populate=*`)
+    .send(partial)
+    .expect(200);
+  assert.equal(patched.body.data.headline, "Welcome back!");
+  assert.equal(patched.body.data.introduction.quotation, "Partial");
   assert.equal((await editor("delete", path).expect(204)).text, "");
   assertError(await anonymous(path).expect(404), 404);
 });
@@ -417,6 +427,102 @@ test("numeric fields accept numeric strings, which Strapi casts to numbers", asy
   await editor("post", "/articles")
     .send({ data: { title: "Not a number", quantity: "twelve" } })
     .expect(400);
+  // Strapi checks the range and integer rules on the cast number.
+  for (const quantity of ["101", "12.5"])
+    await editor("post", "/articles")
+      .send({ data: { title: "Out of range", quantity } })
+      .expect(400);
+  await editor("post", "/articles?status=draft")
+    .send({ data: { title: "Draft out of range", quantity: "101" } })
+    .expect(400);
+  const draft = await editor("post", "/articles?status=draft")
+    .send({ data: { title: "Draft in range", quantity: "100" } })
+    .expect(201);
+  assert.equal(draft.body.data.quantity, 100);
+});
+
+test("spec mode checks a default core response against the schema for its status", async () => {
+  const draft = (
+    await editor("post", "/articles?status=draft")
+      .send({ data: { title: "Status draft" } })
+      .expect(201)
+  ).body.data;
+  const path = `/articles/${draft.documentId}`;
+  await anonymous(`${path}?status=draft`).expect(200);
+  await anonymous(`/articles?status=draft`).expect(200);
+
+  const service = app.strapi.service("api::article.article");
+  const { find, findOne } = service;
+  const patch = (change) => {
+    service.findOne = async function (...args) {
+      const document = await findOne.apply(this, args);
+      if (document) change(document);
+      return document;
+    };
+  };
+  const expectViolation = async (url) => {
+    const response = await anonymous(url).expect(500);
+    assert.equal(response.body.error.name, "ContractViolation");
+    const [violation] = contractViolations(app.strapi);
+    assert.equal(violation.kind, "schema-mismatch");
+    resetContractViolations(app.strapi);
+  };
+  try {
+    // The ordinary response is the published/draft union, which accepts both.
+    patch((document) => {
+      document.publishedAt = "2026-01-01T00:00:00.000Z";
+    });
+    await expectViolation(`${path}?status=draft`);
+    patch((document) => {
+      document.publishedAt = null;
+    });
+    const published = (
+      await editor("post", "/articles")
+        .send({ data: { title: "Status published" } })
+        .expect(201)
+    ).body.data;
+    await expectViolation(`/articles/${published.documentId}`);
+    await expectViolation(`/articles/${published.documentId}?status=published`);
+    // An unsupported status value keeps the ordinary schema.
+    await anonymous(`/articles/${published.documentId}?status=archived`).expect(
+      (response) => assert.notEqual(response.status, 500),
+    );
+    resetContractViolations(app.strapi);
+
+    // A populated draft-and-publish target follows the requested status too.
+    const owner = (
+      await editor("post", "/articles?status=draft")
+        .send({
+          data: {
+            title: "Status owner",
+            relatedArticles: [draft.documentId],
+          },
+        })
+        .expect(201)
+    ).body.data;
+    service.findOne = findOne;
+    await anonymous(
+      `/articles/${owner.documentId}?status=draft&populate[relatedArticles]=true`,
+    ).expect(200);
+    patch((document) => {
+      for (const related of document.relatedArticles ?? [])
+        related.publishedAt = "2026-01-01T00:00:00.000Z";
+    });
+    await expectViolation(
+      `/articles/${owner.documentId}?status=draft&populate[relatedArticles]=true`,
+    );
+    service.findOne = findOne;
+    service.find = async function (...args) {
+      const result = await find.apply(this, args);
+      for (const document of result.results) document.publishedAt = null;
+      return result;
+    };
+    await expectViolation("/articles");
+  } finally {
+    service.find = find;
+    service.findOne = findOne;
+    resetContractViolations(app.strapi);
+  }
 });
 
 test("users-permissions registers, signs in, manages refresh sessions, creates users, and redirects", async () => {
