@@ -27,7 +27,7 @@ const serializeStrapiQuery = (params?: object): string => {
       return;
     }
     if (value === null) {
-      pairs.push(`${prefix}=null`);
+      pairs.push(`${prefix}=`);
       return;
     }
     if (value instanceof Date) {
