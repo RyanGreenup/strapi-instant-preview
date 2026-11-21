@@ -1,5 +1,5 @@
 const { z } = require("zod/v4");
-const { defineResponses } = require("@moworks/strapi-typed-openapi-spec");
+const { defineResponses } = require("@ryangreenup/strapi-typed-openapi-spec");
 
 module.exports = {
   routes: [

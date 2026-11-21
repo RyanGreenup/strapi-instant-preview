@@ -17,6 +17,7 @@ const commands = {
     coverage: stringOption("coverage.json"),
     config,
   },
+  client: { out: stringOption("<directory>"), config },
   check: { against: stringOption("specification.json"), config },
   probe: {},
   audit: { baseline: stringOption("audit.json") },
@@ -104,6 +105,13 @@ async function main() {
       }
       const { assemble } = require("../dist/server/src/spec/assemble.js");
       const { document, coverage } = assemble(app, overrides);
+      if (command === "client") {
+        const { generateClient } = require("./generate-client.js");
+        const output = resolve(values.out ?? "cms-client");
+        await generateClient(document, output);
+        console.log(`Wrote client to ${output}`);
+        return;
+      }
       const json = JSON.stringify(document, null, 2);
       if (command === "check") {
         const against = values.against ?? "specification.json";

@@ -1,7 +1,8 @@
 module.exports = ({ env }) => ({
   "openapi-contract": {
     enabled: true,
-    resolve: require.resolve("@moworks/strapi-typed-openapi-spec/package.json"),
+    resolve:
+      require.resolve("@ryangreenup/strapi-typed-openapi-spec/package.json"),
     config: { exposeSpec: env.bool("FIXTURE_EXPOSE_SPEC", false) },
   },
   "users-permissions": {

@@ -1,5 +1,5 @@
 {
-  "name": "@moworks/strapi-typed-openapi-spec",
+  "name": "@ryangreenup/strapi-typed-openapi-spec",
   "version": "0.0.0",
   "private": true,
   "description": "Generate OpenAPI Spec for Strapi REST API",
@@ -53,6 +53,7 @@
     "ajv": "catalog:",
     "ajv-formats": "catalog:",
     "json-logic-js": "catalog:",
+    "orval": "catalog:",
     "path-to-regexp": "catalog:",
     "supertest": "catalog:",
     "yaml": "catalog:"

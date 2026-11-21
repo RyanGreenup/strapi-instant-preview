@@ -1,0 +1,65 @@
+/**
+ * Serialize query parameters with Strapi's bracket syntax
+ *
+ * For example
+ * ```
+ * filters[title][$eq]=x&populate[author][fields][0]=name&sort[0]=date:desc
+ * ```
+ *
+ * This is hand-written as using `qs` would have a large bundle size if the API
+ * was used in the browser.
+ *
+ * @param params - The query parameter object of one operation. Keys with an
+ *   `undefined` value are left out, as are functions and symbols. Dates are
+ *   sent as ISO 8601 strings.
+ * @returns The encoded query string, without a leading `?`.
+ * @throws {TypeError} If a value contains itself.
+ * @throws {RangeError} If a date is invalid.
+ */
+const serializeStrapiQuery = (params?: object): string => {
+  const pairs: string[] = [];
+  // The objects on the path to the current value, to catch a cycle that
+  // would otherwise recurse until the stack overflows.
+  const ancestors = new Set<object>();
+
+  const append = (prefix: string, value: unknown): void => {
+    if (value === undefined) {
+      return;
+    }
+    if (value === null) {
+      pairs.push(`${prefix}=null`);
+      return;
+    }
+    if (value instanceof Date) {
+      pairs.push(`${prefix}=${encodeURIComponent(value.toISOString())}`);
+      return;
+    }
+    if (typeof value === "object") {
+      if (ancestors.has(value)) {
+        throw new TypeError(`Cyclic value in query parameter ${prefix}`);
+      }
+      ancestors.add(value);
+      // `Object.entries` on an array gives its indices, so `sort[0]=...`.
+      for (const [key, item] of Object.entries(value)) {
+        append(`${prefix}[${encodeURIComponent(key)}]`, item);
+      }
+      ancestors.delete(value);
+      return;
+    }
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      typeof value === "bigint"
+    ) {
+      pairs.push(`${prefix}=${encodeURIComponent(String(value))}`);
+    }
+  };
+
+  for (const [key, value] of Object.entries(params ?? {})) {
+    append(encodeURIComponent(key), value);
+  }
+  return pairs.join("&");
+};
+
+export { serializeStrapiQuery };

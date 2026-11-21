@@ -9,7 +9,7 @@
     "fix": "oxlint -c oxlint.config.mts --fix --fix-suggestions ."
   },
   "dependencies": {
-    "@moworks/strapi-typed-openapi-spec": "workspace:*",
+    "@ryangreenup/strapi-typed-openapi-spec": "workspace:*",
     "@strapi/plugin-users-permissions": "catalog:",
     "@strapi/strapi": "catalog:",
     "better-sqlite3": "catalog:",

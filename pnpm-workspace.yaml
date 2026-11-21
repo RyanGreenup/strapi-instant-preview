@@ -71,6 +71,9 @@ catalog:
   mime-types: ^2.1.27
   openapi-fetch: 0.17.0
   openapi-typescript: 7.13.0
+  # 8.48 walks every query schema path for format encoders, even with none configured.
+  # Exercise `openapi-contract client` against the fixture before upgrading.
+  orval: 8.47.0
   oxfmt: 0.78.0
   oxlint: 1.93.0
   oxlint-tsgolint: 7.0.2007

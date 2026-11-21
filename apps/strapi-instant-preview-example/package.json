@@ -21,7 +21,7 @@
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
-    "@moworks/strapi-admin-seed-plugin": "workspace:*",
+    "@ryangreenup/strapi-admin-seed-plugin": "workspace:*",
     "@ryangreenup/strapi-draft-autosave": "workspace:*",
     "@ryangreenup/strapi-instant-preview": "workspace:*",
     "@ryangreenup/strapi-preview-helpers": "workspace:*",

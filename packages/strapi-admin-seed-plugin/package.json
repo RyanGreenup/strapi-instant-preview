@@ -1,5 +1,5 @@
 {
-  "name": "@moworks/strapi-admin-seed-plugin",
+  "name": "@ryangreenup/strapi-admin-seed-plugin",
   "version": "0.1.0",
   "private": true,
   "description": "Seeds a Strapi super admin and an API token from environment variables",

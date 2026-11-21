@@ -1,4 +1,4 @@
-# @moworks/strapi-admin-seed-plugin
+# @ryangreenup/strapi-admin-seed-plugin
 
 Seeds one Strapi super admin from environment variables so deployments don't
 expose the open `POST /admin/register-admin` endpoint on a fresh deploy /
